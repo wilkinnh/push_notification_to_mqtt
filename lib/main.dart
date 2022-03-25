@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:android_notification_listener2/android_notification_listener2.dart';
+import "package:notifier_listener/notifier_listener.dart";
 
 void main() {
   runApp(const MyApp());
@@ -43,8 +43,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  AndroidNotificationListener _notifications;
-  StreamSubscription<NotificationEventV2> _subscription;
+  AndroidNotificationListener? _notifications;
+  StreamSubscription<NotifierListenerEvent>? _subscription;
 
   @override
   void initState() {
@@ -57,24 +57,22 @@ class _MyHomePageState extends State<MyHomePage> {
     startListening();
   }
 
-  void onData(NotificationEventV2 event) {
+  void onData(NotifierListenerEvent event) {
     print(event);
-    print('converting package extra to json');
-    var jsonDatax = json.decode(event.packageExtra);
-    print(jsonDatax);
   }
 
   void startListening() {
-    _notifications = new AndroidNotificationListener();
+    var listener = new AndroidNotificationListener();
+    _notifications = listener;
     try {
-      _subscription = _notifications.notificationStream.listen(onData);
-    } on NotificationExceptionV2 catch (exception) {
+      _subscription = listener.notificationStream?.listen(onData);
+    } on NotifierListener catch (exception) {
       print(exception);
     }
   }
 
   void stopListening() {
-    _subscription.cancel();
+    _subscription?.cancel();
   }
 
   @override
