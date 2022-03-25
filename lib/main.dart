@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -195,7 +193,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ..timestamp = DateTime.now()
       ..message = message);
 
-    _consoleOutput.add(consoleOutput);
+    setState(() {
+      _consoleOutput.insert(0, consoleOutput);
+    });
   }
 
   @override
@@ -205,14 +205,17 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           title: Text(widget.title),
         ),
-        body: Table(
-          children: List<TableRow>.generate(_consoleOutput.length, (index) {
-            final consoleOutput = _consoleOutput[index];
-            return TableRow(children: [
-              Text(consoleOutput.timestamp.toString()),
-              Text(consoleOutput.message),
-            ]);
-          }),
+        body: SingleChildScrollView(
+          child: Table(
+            children: List<TableRow>.generate(_consoleOutput.length, (index) {
+              final consoleOutput = _consoleOutput[index];
+              return TableRow(
+                children: [
+                  Text("[${consoleOutput.timestamp.toString()}] " + consoleOutput.message),
+                ],
+              );
+            }),
+          ),
         ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.blue,
