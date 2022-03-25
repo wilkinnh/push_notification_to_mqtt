@@ -6,6 +6,7 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:notifier_listener/notifier_listener.dart';
+import 'package:push_notification_to_mqtt/model/console_output.dart';
 import 'package:push_notification_to_mqtt/model/notification_mqtt.dart';
 import 'package:built_collection/built_collection.dart';
 
@@ -52,6 +53,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   AndroidNotificationListener? _notifications;
   StreamSubscription<NotifierListenerEvent>? _subscription;
+  List<ConsoleOutput> _consoleOutput = List.empty(growable: true);
   List<DataModel.ProcessedNotification> _processedNotifications = List.empty(growable: true);
   List<NotificationMQTT> _notificationParsers = List.empty(growable: true);
   MqttServerClient? _mqttServerClient;
@@ -69,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> startMQTTServerClient() async {
-    final client = MqttServerClient('home.natewilkinson.com', '');
+    final client = MqttServerClient('homeassistant.local', '');
 
     /// Set the correct MQTT protocol for mosquito
     client.setProtocolV311();
@@ -123,6 +125,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void onData(NotifierListenerEvent event) {
     print(event);
 
+    logConsoleOutput(
+        'Notification received for ${event.packageName}:\nText: ${event.packageText}\nMessage: ${event.packageMessage}');
+
     final notification = DataModel.Notification((b) => b
       ..packageName = event.packageName
       ..message = event.packageMessage
@@ -141,9 +146,17 @@ class _MyHomePageState extends State<MyHomePage> {
         return;
       }
       final regex = RegExp(parser.regex);
-      final match = regex.firstMatch(notification.text);
+      final textMatch = regex.firstMatch(notification.text)?.group(0);
+      final messageMatch = regex.firstMatch(notification.message)?.group(0);
       // check if first match equals the regexMatch
-      if (match?.group(0) == parser.regexMatch) {
+      if (textMatch == parser.regexMatch || messageMatch == parser.regexMatch) {
+        if (textMatch != null) {
+          logConsoleOutput('Notification regex match in text: ${parser.regexMatch} in ${parser.regex}');
+        }
+        if (messageMatch != null) {
+          logConsoleOutput('Notification regex match in message: ${parser.regexMatch} in ${parser.regex}');
+        }
+
         matches.add(parser);
 
         // publish MQTT message
@@ -159,10 +172,30 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> publishMQTTMessage(DataModel.Notification notification, NotificationMQTT parser) async {
-    final builder1 = MqttClientPayloadBuilder();
-    builder1.addString('Hello from mqtt_client topic 1');
-    print('EXAMPLE:: <<<< PUBLISH 1 >>>>');
-    _mqttServerClient?.publishMessage(parser.publishTopic, MqttQos.exactlyOnce, builder1.payload!);
+    final builder = MqttClientPayloadBuilder();
+
+    if (parser.dataRegex != null) {
+      final regex = RegExp(parser.dataRegex!);
+      final textMatch = regex.firstMatch(notification.text)?.group(0);
+      final messageMatch = regex.firstMatch(notification.message)?.group(0);
+      if (textMatch != null) {
+        logConsoleOutput('Notification data regex match: $textMatch in ${parser.dataRegex!}');
+        builder.addString(textMatch);
+      }
+      if (messageMatch != null) {
+        logConsoleOutput('Notification regex match: $messageMatch in ${parser.dataRegex!}');
+        builder.addString(messageMatch);
+      }
+    }
+    _mqttServerClient?.publishMessage(parser.publishTopic, MqttQos.exactlyOnce, builder.payload!);
+  }
+
+  void logConsoleOutput(String message) {
+    final consoleOutput = ConsoleOutput((b) => b
+      ..timestamp = DateTime.now()
+      ..message = message);
+
+    _consoleOutput.add(consoleOutput);
   }
 
   @override
@@ -173,17 +206,11 @@ class _MyHomePageState extends State<MyHomePage> {
           title: Text(widget.title),
         ),
         body: Table(
-          children: List<TableRow>.generate(_processedNotifications.length, (index) {
-            final processedNotification = _processedNotifications[index];
+          children: List<TableRow>.generate(_consoleOutput.length, (index) {
+            final consoleOutput = _consoleOutput[index];
             return TableRow(children: [
-              ListView(
-                children: [
-                  Text('PackageName: ' + processedNotification.notification.packageName),
-                  Text('Text: ' + processedNotification.notification.text),
-                  Text('Message: ' + processedNotification.notification.message),
-                  Text('Timestamp: ' + processedNotification.notification.timestamp.toString()),
-                ],
-              )
+              Text(consoleOutput.timestamp.toString()),
+              Text(consoleOutput.message),
             ]);
           }),
         ),
