@@ -8,6 +8,8 @@ part of 'notification.dart';
 
 Serializer<Notification> _$notificationSerializer =
     new _$NotificationSerializer();
+Serializer<ProcessedNotification> _$processedNotificationSerializer =
+    new _$ProcessedNotificationSerializer();
 
 class _$NotificationSerializer implements StructuredSerializer<Notification> {
   @override
@@ -62,6 +64,62 @@ class _$NotificationSerializer implements StructuredSerializer<Notification> {
         case 'timestamp':
           result.timestamp = serializers.deserialize(value,
               specifiedType: const FullType(DateTime)) as DateTime;
+          break;
+      }
+    }
+
+    return result.build();
+  }
+}
+
+class _$ProcessedNotificationSerializer
+    implements StructuredSerializer<ProcessedNotification> {
+  @override
+  final Iterable<Type> types = const [
+    ProcessedNotification,
+    _$ProcessedNotification
+  ];
+  @override
+  final String wireName = 'ProcessedNotification';
+
+  @override
+  Iterable<Object?> serialize(
+      Serializers serializers, ProcessedNotification object,
+      {FullType specifiedType = FullType.unspecified}) {
+    final result = <Object?>[
+      'notification',
+      serializers.serialize(object.notification,
+          specifiedType: const FullType(Notification)),
+      'regexMatches',
+      serializers.serialize(object.regexMatches,
+          specifiedType: const FullType(
+              BuiltList, const [const FullType(NotificationMQTT)])),
+    ];
+
+    return result;
+  }
+
+  @override
+  ProcessedNotification deserialize(
+      Serializers serializers, Iterable<Object?> serialized,
+      {FullType specifiedType = FullType.unspecified}) {
+    final result = new ProcessedNotificationBuilder();
+
+    final iterator = serialized.iterator;
+    while (iterator.moveNext()) {
+      final key = iterator.current as String;
+      iterator.moveNext();
+      final Object? value = iterator.current;
+      switch (key) {
+        case 'notification':
+          result.notification.replace(serializers.deserialize(value,
+              specifiedType: const FullType(Notification))! as Notification);
+          break;
+        case 'regexMatches':
+          result.regexMatches.replace(serializers.deserialize(value,
+                  specifiedType: const FullType(
+                      BuiltList, const [const FullType(NotificationMQTT)]))!
+              as BuiltList<Object?>);
           break;
       }
     }
@@ -189,6 +247,121 @@ class NotificationBuilder
                 text, 'Notification', 'text'),
             timestamp: BuiltValueNullFieldError.checkNotNull(
                 timestamp, 'Notification', 'timestamp'));
+    replace(_$result);
+    return _$result;
+  }
+}
+
+class _$ProcessedNotification extends ProcessedNotification {
+  @override
+  final Notification notification;
+  @override
+  final BuiltList<NotificationMQTT> regexMatches;
+
+  factory _$ProcessedNotification(
+          [void Function(ProcessedNotificationBuilder)? updates]) =>
+      (new ProcessedNotificationBuilder()..update(updates)).build();
+
+  _$ProcessedNotification._(
+      {required this.notification, required this.regexMatches})
+      : super._() {
+    BuiltValueNullFieldError.checkNotNull(
+        notification, 'ProcessedNotification', 'notification');
+    BuiltValueNullFieldError.checkNotNull(
+        regexMatches, 'ProcessedNotification', 'regexMatches');
+  }
+
+  @override
+  ProcessedNotification rebuild(
+          void Function(ProcessedNotificationBuilder) updates) =>
+      (toBuilder()..update(updates)).build();
+
+  @override
+  ProcessedNotificationBuilder toBuilder() =>
+      new ProcessedNotificationBuilder()..replace(this);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(other, this)) return true;
+    return other is ProcessedNotification &&
+        notification == other.notification &&
+        regexMatches == other.regexMatches;
+  }
+
+  @override
+  int get hashCode {
+    return $jf($jc($jc(0, notification.hashCode), regexMatches.hashCode));
+  }
+
+  @override
+  String toString() {
+    return (newBuiltValueToStringHelper('ProcessedNotification')
+          ..add('notification', notification)
+          ..add('regexMatches', regexMatches))
+        .toString();
+  }
+}
+
+class ProcessedNotificationBuilder
+    implements Builder<ProcessedNotification, ProcessedNotificationBuilder> {
+  _$ProcessedNotification? _$v;
+
+  NotificationBuilder? _notification;
+  NotificationBuilder get notification =>
+      _$this._notification ??= new NotificationBuilder();
+  set notification(NotificationBuilder? notification) =>
+      _$this._notification = notification;
+
+  ListBuilder<NotificationMQTT>? _regexMatches;
+  ListBuilder<NotificationMQTT> get regexMatches =>
+      _$this._regexMatches ??= new ListBuilder<NotificationMQTT>();
+  set regexMatches(ListBuilder<NotificationMQTT>? regexMatches) =>
+      _$this._regexMatches = regexMatches;
+
+  ProcessedNotificationBuilder();
+
+  ProcessedNotificationBuilder get _$this {
+    final $v = _$v;
+    if ($v != null) {
+      _notification = $v.notification.toBuilder();
+      _regexMatches = $v.regexMatches.toBuilder();
+      _$v = null;
+    }
+    return this;
+  }
+
+  @override
+  void replace(ProcessedNotification other) {
+    ArgumentError.checkNotNull(other, 'other');
+    _$v = other as _$ProcessedNotification;
+  }
+
+  @override
+  void update(void Function(ProcessedNotificationBuilder)? updates) {
+    if (updates != null) updates(this);
+  }
+
+  @override
+  _$ProcessedNotification build() {
+    _$ProcessedNotification _$result;
+    try {
+      _$result = _$v ??
+          new _$ProcessedNotification._(
+              notification: notification.build(),
+              regexMatches: regexMatches.build());
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'notification';
+        notification.build();
+        _$failedField = 'regexMatches';
+        regexMatches.build();
+      } catch (e) {
+        throw new BuiltValueNestedFieldError(
+            'ProcessedNotification', _$failedField, e.toString());
+      }
+      rethrow;
+    }
     replace(_$result);
     return _$result;
   }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:notifier_listener/notifier_listener.dart';
 
-import "package:notifier_listener/notifier_listener.dart";
+import 'model/notification.dart' as DataModel;
 
 void main() {
   runApp(const MyApp());
@@ -59,6 +60,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void onData(NotifierListenerEvent event) {
     print(event);
+
+    final notification = DataModel.Notification((b) => b
+      ..packageName = event.packageName
+      ..message = event.packageMessage
+      ..text = event.packageText
+      ..timestamp = event.timeStamp);
   }
 
   void startListening() {
