@@ -26,7 +26,14 @@ class _$ConsoleOutputSerializer implements StructuredSerializer<ConsoleOutput> {
       serializers.serialize(object.message,
           specifiedType: const FullType(String)),
     ];
-
+    Object? value;
+    value = object.icon;
+    if (value != null) {
+      result
+        ..add('icon')
+        ..add(serializers.serialize(value,
+            specifiedType: const FullType(Uint8List)));
+    }
     return result;
   }
 
@@ -50,6 +57,10 @@ class _$ConsoleOutputSerializer implements StructuredSerializer<ConsoleOutput> {
           result.message = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String;
           break;
+        case 'icon':
+          result.icon = serializers.deserialize(value,
+              specifiedType: const FullType(Uint8List)) as Uint8List?;
+          break;
       }
     }
 
@@ -62,11 +73,13 @@ class _$ConsoleOutput extends ConsoleOutput {
   final DateTime timestamp;
   @override
   final String message;
+  @override
+  final Uint8List? icon;
 
   factory _$ConsoleOutput([void Function(ConsoleOutputBuilder)? updates]) =>
       (new ConsoleOutputBuilder()..update(updates)).build();
 
-  _$ConsoleOutput._({required this.timestamp, required this.message})
+  _$ConsoleOutput._({required this.timestamp, required this.message, this.icon})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(
         timestamp, 'ConsoleOutput', 'timestamp');
@@ -85,19 +98,22 @@ class _$ConsoleOutput extends ConsoleOutput {
     if (identical(other, this)) return true;
     return other is ConsoleOutput &&
         timestamp == other.timestamp &&
-        message == other.message;
+        message == other.message &&
+        icon == other.icon;
   }
 
   @override
   int get hashCode {
-    return $jf($jc($jc(0, timestamp.hashCode), message.hashCode));
+    return $jf(
+        $jc($jc($jc(0, timestamp.hashCode), message.hashCode), icon.hashCode));
   }
 
   @override
   String toString() {
     return (newBuiltValueToStringHelper('ConsoleOutput')
           ..add('timestamp', timestamp)
-          ..add('message', message))
+          ..add('message', message)
+          ..add('icon', icon))
         .toString();
   }
 }
@@ -114,6 +130,10 @@ class ConsoleOutputBuilder
   String? get message => _$this._message;
   set message(String? message) => _$this._message = message;
 
+  Uint8List? _icon;
+  Uint8List? get icon => _$this._icon;
+  set icon(Uint8List? icon) => _$this._icon = icon;
+
   ConsoleOutputBuilder();
 
   ConsoleOutputBuilder get _$this {
@@ -121,6 +141,7 @@ class ConsoleOutputBuilder
     if ($v != null) {
       _timestamp = $v.timestamp;
       _message = $v.message;
+      _icon = $v.icon;
       _$v = null;
     }
     return this;
@@ -144,7 +165,8 @@ class ConsoleOutputBuilder
             timestamp: BuiltValueNullFieldError.checkNotNull(
                 timestamp, 'ConsoleOutput', 'timestamp'),
             message: BuiltValueNullFieldError.checkNotNull(
-                message, 'ConsoleOutput', 'message'));
+                message, 'ConsoleOutput', 'message'),
+            icon: icon);
     replace(_$result);
     return _$result;
   }

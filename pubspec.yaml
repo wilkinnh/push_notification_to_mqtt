@@ -33,6 +33,7 @@ dependencies:
   notifier_listener: ^0.0.2
   mqtt_client: ^9.6.5
   built_value: ^8.1.4
+  device_apps: ^2.1.1
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
@@ -10,6 +12,8 @@ abstract class ConsoleOutput implements Built<ConsoleOutput, ConsoleOutputBuilde
   DateTime get timestamp;
 
   String get message;
+
+  Uint8List? get icon;
 
   ConsoleOutput._();
   factory ConsoleOutput([void Function(ConsoleOutputBuilder) updates]) = _$ConsoleOutput;
