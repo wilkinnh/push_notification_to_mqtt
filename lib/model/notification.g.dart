@@ -93,7 +93,7 @@ class _$ProcessedNotificationSerializer
       'regexMatches',
       serializers.serialize(object.regexMatches,
           specifiedType: const FullType(
-              BuiltList, const [const FullType(NotificationMQTT)])),
+              BuiltList, const [const FullType(NotificationMQTTRule)])),
     ];
 
     return result;
@@ -118,7 +118,7 @@ class _$ProcessedNotificationSerializer
         case 'regexMatches':
           result.regexMatches.replace(serializers.deserialize(value,
                   specifiedType: const FullType(
-                      BuiltList, const [const FullType(NotificationMQTT)]))!
+                      BuiltList, const [const FullType(NotificationMQTTRule)]))!
               as BuiltList<Object?>);
           break;
       }
@@ -256,7 +256,7 @@ class _$ProcessedNotification extends ProcessedNotification {
   @override
   final Notification notification;
   @override
-  final BuiltList<NotificationMQTT> regexMatches;
+  final BuiltList<NotificationMQTTRule> regexMatches;
 
   factory _$ProcessedNotification(
           [void Function(ProcessedNotificationBuilder)? updates]) =>
@@ -312,10 +312,10 @@ class ProcessedNotificationBuilder
   set notification(NotificationBuilder? notification) =>
       _$this._notification = notification;
 
-  ListBuilder<NotificationMQTT>? _regexMatches;
-  ListBuilder<NotificationMQTT> get regexMatches =>
-      _$this._regexMatches ??= new ListBuilder<NotificationMQTT>();
-  set regexMatches(ListBuilder<NotificationMQTT>? regexMatches) =>
+  ListBuilder<NotificationMQTTRule>? _regexMatches;
+  ListBuilder<NotificationMQTTRule> get regexMatches =>
+      _$this._regexMatches ??= new ListBuilder<NotificationMQTTRule>();
+  set regexMatches(ListBuilder<NotificationMQTTRule>? regexMatches) =>
       _$this._regexMatches = regexMatches;
 
   ProcessedNotificationBuilder();

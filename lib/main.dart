@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'model/data_manager.dart';
 import 'console_log_list.dart';
 
 void main() {
@@ -32,8 +34,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: ConsoleLogList(),
+    return Provider(
+      create: (_) => DataManager(),
+      lazy: false,
+      child: MaterialApp(
+        home: ConsoleLogList(),
+      ),
     );
   }
 }

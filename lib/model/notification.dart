@@ -1,7 +1,7 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
-import 'package:push_notification_to_mqtt/model/notification_mqtt.dart';
+import 'package:push_notification_to_mqtt/model/notification_mqtt_rule.dart';
 
 part 'notification.g.dart';
 
@@ -25,7 +25,7 @@ abstract class ProcessedNotification implements Built<ProcessedNotification, Pro
 
   Notification get notification;
 
-  BuiltList<NotificationMQTT> get regexMatches;
+  BuiltList<NotificationMQTTRule> get regexMatches;
 
   ProcessedNotification._();
   factory ProcessedNotification([void Function(ProcessedNotificationBuilder) updates]) = _$ProcessedNotification;

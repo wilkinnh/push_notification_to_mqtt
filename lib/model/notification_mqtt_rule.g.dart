@@ -1,23 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'notification_mqtt.dart';
+part of 'notification_mqtt_rule.dart';
 
 // **************************************************************************
 // BuiltValueGenerator
 // **************************************************************************
 
-Serializer<NotificationMQTT> _$notificationMQTTSerializer =
-    new _$NotificationMQTTSerializer();
+Serializer<NotificationMQTTRule> _$notificationMQTTRuleSerializer =
+    new _$NotificationMQTTRuleSerializer();
 
-class _$NotificationMQTTSerializer
-    implements StructuredSerializer<NotificationMQTT> {
+class _$NotificationMQTTRuleSerializer
+    implements StructuredSerializer<NotificationMQTTRule> {
   @override
-  final Iterable<Type> types = const [NotificationMQTT, _$NotificationMQTT];
+  final Iterable<Type> types = const [
+    NotificationMQTTRule,
+    _$NotificationMQTTRule
+  ];
   @override
-  final String wireName = 'NotificationMQTT';
+  final String wireName = 'NotificationMQTTRule';
 
   @override
-  Iterable<Object?> serialize(Serializers serializers, NotificationMQTT object,
+  Iterable<Object?> serialize(
+      Serializers serializers, NotificationMQTTRule object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object?>[
       'packageName',
@@ -45,10 +49,10 @@ class _$NotificationMQTTSerializer
   }
 
   @override
-  NotificationMQTT deserialize(
+  NotificationMQTTRule deserialize(
       Serializers serializers, Iterable<Object?> serialized,
       {FullType specifiedType = FullType.unspecified}) {
-    final result = new NotificationMQTTBuilder();
+    final result = new NotificationMQTTRuleBuilder();
 
     final iterator = serialized.iterator;
     while (iterator.moveNext()) {
@@ -83,7 +87,7 @@ class _$NotificationMQTTSerializer
   }
 }
 
-class _$NotificationMQTT extends NotificationMQTT {
+class _$NotificationMQTTRule extends NotificationMQTTRule {
   @override
   final String packageName;
   @override
@@ -95,11 +99,11 @@ class _$NotificationMQTT extends NotificationMQTT {
   @override
   final String publishTopic;
 
-  factory _$NotificationMQTT(
-          [void Function(NotificationMQTTBuilder)? updates]) =>
-      (new NotificationMQTTBuilder()..update(updates)).build();
+  factory _$NotificationMQTTRule(
+          [void Function(NotificationMQTTRuleBuilder)? updates]) =>
+      (new NotificationMQTTRuleBuilder()..update(updates)).build();
 
-  _$NotificationMQTT._(
+  _$NotificationMQTTRule._(
       {required this.packageName,
       required this.regex,
       required this.regexMatch,
@@ -107,26 +111,28 @@ class _$NotificationMQTT extends NotificationMQTT {
       required this.publishTopic})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(
-        packageName, 'NotificationMQTT', 'packageName');
-    BuiltValueNullFieldError.checkNotNull(regex, 'NotificationMQTT', 'regex');
+        packageName, 'NotificationMQTTRule', 'packageName');
     BuiltValueNullFieldError.checkNotNull(
-        regexMatch, 'NotificationMQTT', 'regexMatch');
+        regex, 'NotificationMQTTRule', 'regex');
     BuiltValueNullFieldError.checkNotNull(
-        publishTopic, 'NotificationMQTT', 'publishTopic');
+        regexMatch, 'NotificationMQTTRule', 'regexMatch');
+    BuiltValueNullFieldError.checkNotNull(
+        publishTopic, 'NotificationMQTTRule', 'publishTopic');
   }
 
   @override
-  NotificationMQTT rebuild(void Function(NotificationMQTTBuilder) updates) =>
+  NotificationMQTTRule rebuild(
+          void Function(NotificationMQTTRuleBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  NotificationMQTTBuilder toBuilder() =>
-      new NotificationMQTTBuilder()..replace(this);
+  NotificationMQTTRuleBuilder toBuilder() =>
+      new NotificationMQTTRuleBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is NotificationMQTT &&
+    return other is NotificationMQTTRule &&
         packageName == other.packageName &&
         regex == other.regex &&
         regexMatch == other.regexMatch &&
@@ -146,7 +152,7 @@ class _$NotificationMQTT extends NotificationMQTT {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper('NotificationMQTT')
+    return (newBuiltValueToStringHelper('NotificationMQTTRule')
           ..add('packageName', packageName)
           ..add('regex', regex)
           ..add('regexMatch', regexMatch)
@@ -156,9 +162,9 @@ class _$NotificationMQTT extends NotificationMQTT {
   }
 }
 
-class NotificationMQTTBuilder
-    implements Builder<NotificationMQTT, NotificationMQTTBuilder> {
-  _$NotificationMQTT? _$v;
+class NotificationMQTTRuleBuilder
+    implements Builder<NotificationMQTTRule, NotificationMQTTRuleBuilder> {
+  _$NotificationMQTTRule? _$v;
 
   String? _packageName;
   String? get packageName => _$this._packageName;
@@ -180,9 +186,9 @@ class NotificationMQTTBuilder
   String? get publishTopic => _$this._publishTopic;
   set publishTopic(String? publishTopic) => _$this._publishTopic = publishTopic;
 
-  NotificationMQTTBuilder();
+  NotificationMQTTRuleBuilder();
 
-  NotificationMQTTBuilder get _$this {
+  NotificationMQTTRuleBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
       _packageName = $v.packageName;
@@ -196,29 +202,29 @@ class NotificationMQTTBuilder
   }
 
   @override
-  void replace(NotificationMQTT other) {
+  void replace(NotificationMQTTRule other) {
     ArgumentError.checkNotNull(other, 'other');
-    _$v = other as _$NotificationMQTT;
+    _$v = other as _$NotificationMQTTRule;
   }
 
   @override
-  void update(void Function(NotificationMQTTBuilder)? updates) {
+  void update(void Function(NotificationMQTTRuleBuilder)? updates) {
     if (updates != null) updates(this);
   }
 
   @override
-  _$NotificationMQTT build() {
+  _$NotificationMQTTRule build() {
     final _$result = _$v ??
-        new _$NotificationMQTT._(
+        new _$NotificationMQTTRule._(
             packageName: BuiltValueNullFieldError.checkNotNull(
-                packageName, 'NotificationMQTT', 'packageName'),
+                packageName, 'NotificationMQTTRule', 'packageName'),
             regex: BuiltValueNullFieldError.checkNotNull(
-                regex, 'NotificationMQTT', 'regex'),
+                regex, 'NotificationMQTTRule', 'regex'),
             regexMatch: BuiltValueNullFieldError.checkNotNull(
-                regexMatch, 'NotificationMQTT', 'regexMatch'),
+                regexMatch, 'NotificationMQTTRule', 'regexMatch'),
             dataRegex: dataRegex,
             publishTopic: BuiltValueNullFieldError.checkNotNull(
-                publishTopic, 'NotificationMQTT', 'publishTopic'));
+                publishTopic, 'NotificationMQTTRule', 'publishTopic'));
     replace(_$result);
     return _$result;
   }
