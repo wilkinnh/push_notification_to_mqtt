@@ -19,7 +19,7 @@ class _SettingsState extends State<Settings> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings"),
+        title: const Text('Settings'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
@@ -28,34 +28,54 @@ class _SettingsState extends State<Settings> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Table(
-          border: TableBorder.all(color: Colors.black),
-          children: [
-            TableRow(
-              children: [
-                const Text("Public path to rules JSON"),
-                TextFormField(
-                  initialValue: context.watch<DataManager>().rulesURL,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(),
-                    labelText: 'https://link.to/rules.json',
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Table(
+            children: [
+              const TableRow(
+                children: [
+                  Text(
+                    'Public path to rules JSON',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
                   ),
-                  onSaved: (value) {
-                    context.watch<DataManager>().rulesURL = value;
-                    reloadRules(context);
-                  },
-                ),
-              ],
-            ),
-            TableRow(children: [
-              TextButton(
-                child: const Text("Reload Rules"),
-                onPressed: () {
-                  reloadRules(context);
-                },
-              )
-            ])
-          ],
+                ],
+              ),
+              TableRow(
+                children: [
+                  TextFormField(
+                    initialValue: context.watch<DataManager>().rulesURL,
+                    keyboardType: TextInputType.url,
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(),
+                      labelText: 'https://link.to/rules.json',
+                    ),
+                    onSaved: (value) {
+                      context.watch<DataManager>().rulesURL = value;
+                      reloadRules(context);
+                    },
+                  ),
+                ],
+              ),
+              TableRow(children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('${context.watch<DataManager>().rules.length} rules loaded'),
+                    ),
+                    TextButton(
+                      child: const Text('Reload Rules'),
+                      onPressed: () {
+                        reloadRules(context);
+                      },
+                    ),
+                  ],
+                )
+              ])
+            ],
+          ),
         ),
       ),
     );

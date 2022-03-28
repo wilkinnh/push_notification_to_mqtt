@@ -31,7 +31,10 @@ class _ConsoleLogListState extends State<ConsoleLogList> {
               },
             ),
             TextButton(
-              child: const Text('Clear'),
+              child: const Text(
+                'Clear',
+                style: TextStyle(color: Colors.red),
+              ),
               onPressed: () {
                 dataManager(context).clearConsoleLogs();
                 Navigator.of(context).pop();
