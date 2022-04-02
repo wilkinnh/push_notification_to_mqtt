@@ -11,12 +11,20 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-  void reloadRules(BuildContext context) {
-    context.watch<DataManager>().reloadRules();
+  final textEditingController = TextEditingController();
+
+  void dispose() {
+    // Clean up the controller when the widget is removed from the widget tree.
+    textEditingController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final dataManager = Provider.of<DataManager>(context, listen: false);
+    if (textEditingController.text.isEmpty && dataManager.rulesURL != null) {
+      textEditingController.text = dataManager.rulesURL!;
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -45,35 +53,66 @@ class _SettingsState extends State<Settings> {
               ),
               TableRow(
                 children: [
-                  TextFormField(
-                    initialValue: context.watch<DataManager>().rulesURL,
+                  TextField(
+                    controller: textEditingController,
                     keyboardType: TextInputType.url,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
                     decoration: const InputDecoration(
                       border: UnderlineInputBorder(),
                       labelText: 'https://link.to/rules.json',
                     ),
-                    onSaved: (value) {
-                      context.watch<DataManager>().rulesURL = value;
-                      reloadRules(context);
+                    onSubmitted: (value) {
+                      dataManager.rulesURL = textEditingController.text;
+                      dataManager.reloadRules();
                     },
                   ),
                 ],
               ),
-              TableRow(children: [
-                Row(
+              TableRow(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text('${context.watch<DataManager>().rules.length} rules loaded'),
+                      ),
+                      TextButton(
+                        child: const Text('Reload Rules'),
+                        onPressed: () {
+                          dataManager.reloadRules();
+                        },
+                      ),
+                    ],
+                  )
+                ],
+              ),
+              ...List<TableRow>.generate(dataManager.rules.length, (index) {
+                final rule = dataManager.rules[index];
+                return TableRow(
                   children: [
-                    Expanded(
-                      child: Text('${context.watch<DataManager>().rules.length} rules loaded'),
-                    ),
-                    TextButton(
-                      child: const Text('Reload Rules'),
-                      onPressed: () {
-                        reloadRules(context);
-                      },
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 5, 10, 5),
+                      child: Row(
+                        children: [
+                          Text(
+                            rule.regexMatch,
+                            style: const TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            rule.regex,
+                            style: const TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                )
-              ])
+                );
+              }),
             ],
           ),
         ),

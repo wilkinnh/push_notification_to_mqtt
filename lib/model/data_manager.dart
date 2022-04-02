@@ -18,7 +18,7 @@ import 'console_output.dart';
 enum SharedPreferenceKey { rulesURL }
 
 class DataManager with ChangeNotifier {
-  String? rulesURL;
+  String? rulesURL = 'https://dl.dropbox.com/s/xvmdisl648ad92t/notification_mqtt_rules.json?dl=0';
   List<NotificationMQTTRule> rules = [];
   List<ConsoleOutput> consoleOutput = [];
 
@@ -41,16 +41,36 @@ class DataManager with ChangeNotifier {
       return [];
     }
     final response = await _client.get(Uri.parse(rulesURL!));
-    final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
-    rules = parsed.map<NotificationMQTTRule>((json) => NotificationMQTTRule.fromJson(json)).whereNotNull().toList();
-    notifyListeners();
+    final List<dynamic> parsed = jsonDecode(response.body);
+    final List<NotificationMQTTRule> loadedRules = parsed
+        .map<NotificationMQTTRule?>((item) {
+          final jsonString = jsonEncode(item);
+          return NotificationMQTTRule.fromJson(jsonString);
+        })
+        .whereNotNull()
+        .toList();
+    if (loadedRules.isNotEmpty) {
+      rules = loadedRules;
+      _notifyReload();
+      notifyListeners();
+    }
     return rules;
+  }
+
+  Future<void> _notifyReload() async {
+    // sent MQTT message after successful reload
+    final builder = MqttClientPayloadBuilder();
+    builder.addInt(rules.length);
+    _mqttServerClient?.publishMessage('notification-mqtt-rules-loaded', MqttQos.exactlyOnce, builder.payload!);
   }
 
   Future<void> _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    rulesURL = prefs.getString(SharedPreferenceKey.rulesURL.toString());
-    notifyListeners();
+    final loadedRulesURL = prefs.getString(SharedPreferenceKey.rulesURL.toString());
+    if (loadedRulesURL != null) {
+      rulesURL = loadedRulesURL;
+      notifyListeners();
+    }
   }
 
   Future<void> _loadApps() async {
