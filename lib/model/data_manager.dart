@@ -184,11 +184,13 @@ class DataManager with ChangeNotifier {
       final textMatch = regex.firstMatch(notification.text)?.group(0);
       final messageMatch = regex.firstMatch(notification.message)?.group(0);
       if (textMatch != null) {
-        logConsoleOutput(notification.packageName, 'Notification data regex match: $textMatch in ${parser.dataRegex!}');
+        logConsoleOutput(
+            notification.packageName, 'Notification data regex match in text: $textMatch in ${parser.dataRegex!}');
         builder.addString(textMatch);
       }
       if (messageMatch != null) {
-        logConsoleOutput(notification.packageName, 'Notification regex match: $messageMatch in ${parser.dataRegex!}');
+        logConsoleOutput(notification.packageName,
+            'Notification data regex match in message: $messageMatch in ${parser.dataRegex!}');
         builder.addString(messageMatch);
       }
     }
@@ -239,16 +241,14 @@ class DataManager with ChangeNotifier {
       if (textMatch == notificationRule.regexMatch ||
           messageMatch == notificationRule.regexMatch ||
           notificationRule.regexMatch == null) {
-        if (textMatch != null) {
-          logConsoleOutput(notification.packageName,
-              'Notification regex match in text: ${notificationRule.regexMatch} in ${notificationRule.regex}');
-        }
-        if (messageMatch != null) {
-          logConsoleOutput(notification.packageName,
-              'Notification regex match in message: ${notificationRule.regexMatch} in ${notificationRule.regex}');
-        }
         if (notificationRule.regexMatch == null) {
           logConsoleOutput(notification.packageName, 'Notification regex match');
+        } else if (textMatch != null) {
+          logConsoleOutput(notification.packageName,
+              'Notification regex match in text: ${notificationRule.regexMatch} in ${notificationRule.regex}');
+        } else if (messageMatch != null) {
+          logConsoleOutput(notification.packageName,
+              'Notification regex match in message: ${notificationRule.regexMatch} in ${notificationRule.regex}');
         }
 
         matches.add(notificationRule);
