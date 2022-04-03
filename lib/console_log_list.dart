@@ -13,10 +13,10 @@ class ConsoleLogList extends StatefulWidget {
 
 class _ConsoleLogListState extends State<ConsoleLogList> {
   void clearConsoleLog(BuildContext context) {
+    final dataManager = Provider.of<DataManager>(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        final dataManager = Provider.of<DataManager>(context);
         return AlertDialog(
           title: const Text('Clear Console Log?'),
           content: const Text('This action cannot be undone.'),
@@ -73,10 +73,10 @@ class _ConsoleLogListState extends State<ConsoleLogList> {
             padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
             child: Text('${dataManager.rules.length} rule${dataManager.rules.length == 1 ? '' : 's'} loaded'),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-            child: Text('${dataManager.consoleOutput.length} console output'),
-          ),
+//          Padding(
+//            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+//            child: Text('${dataManager.consoleOutput.length} console output'),
+//          ),
           const Divider(height: 1),
           SingleChildScrollView(
             child: Table(

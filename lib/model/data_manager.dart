@@ -15,12 +15,14 @@ import 'notification_mqtt_rule.dart';
 import 'notification.dart' as DataModel;
 import 'console_output.dart';
 
-enum SharedPreferenceKey { rulesURL }
+enum SharedPreferenceKey { rulesURL, mqttServerURL }
 
 class DataManager with ChangeNotifier {
-  String? rulesURL = 'https://dl.dropbox.com/s/xvmdisl648ad92t/notification_mqtt_rules.json?dl=0';
   List<NotificationMQTTRule> rules = [];
   List<ConsoleOutput> consoleOutput = [];
+
+  String? _rulesURL;
+  String? _mqttServerURL;
 
   final http.Client _client = http.Client();
   AndroidNotificationListener? _notifications;
@@ -33,7 +35,6 @@ class DataManager with ChangeNotifier {
     _loadSettings();
     _loadApps();
     _startMQTTServerClient();
-    reloadRules();
     _startRemoteNotificationListener();
 
     Timer.periodic(const Duration(hours: 1), (timer) {
@@ -43,11 +44,16 @@ class DataManager with ChangeNotifier {
 
   Future<void> _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    final loadedMQTTServerURL = prefs.getString(SharedPreferenceKey.mqttServerURL.toString());
+    if (loadedMQTTServerURL != null) {
+      _mqttServerURL = loadedMQTTServerURL;
+    }
     final loadedRulesURL = prefs.getString(SharedPreferenceKey.rulesURL.toString());
     if (loadedRulesURL != null) {
-      rulesURL = loadedRulesURL;
-      notifyListeners();
+      _rulesURL = loadedRulesURL;
+      reloadRules();
     }
+    notifyListeners();
   }
 
   Future<void> _loadApps() async {
@@ -57,6 +63,34 @@ class DataManager with ChangeNotifier {
         apps.map<ApplicationWithIcon>((app) => app as ApplicationWithIcon).toList();
     _apps = appsWithIcons;
     notifyListeners();
+  }
+
+  // Getters/Setters
+
+  String? get rulesURL {
+    return _rulesURL;
+  }
+
+  set rulesURL(String? rulesURL) {
+    _rulesURL = rulesURL;
+    if (rulesURL != null) {
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setString(SharedPreferenceKey.rulesURL.toString(), rulesURL);
+      });
+    }
+  }
+
+  String? get mqttServerURL {
+    return _mqttServerURL;
+  }
+
+  set mqttServerURL(String? mqttServerURL) {
+    _mqttServerURL = mqttServerURL;
+    if (mqttServerURL != null) {
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setString(SharedPreferenceKey.mqttServerURL.toString(), mqttServerURL);
+      });
+    }
   }
 
   // Reload rules
@@ -92,7 +126,12 @@ class DataManager with ChangeNotifier {
   // MQTT
 
   Future<void> _startMQTTServerClient() async {
-    final client = MqttServerClient('homeassistant.local', '');
+    if (mqttServerURL == null) {
+      print('MQTT server url undefined');
+      return;
+    }
+
+    final client = MqttServerClient(mqttServerURL!, '');
 
     /// Set the correct MQTT protocol for mosquito
     client.logging(on: false);
@@ -130,6 +169,14 @@ class DataManager with ChangeNotifier {
   }
 
   Future<void> _publishMQTTMessage(DataModel.Notification notification, NotificationMQTTRule parser) async {
+    if (_mqttServerClient == null) {
+      await _startMQTTServerClient();
+      if (_mqttServerClient == null) {
+        print('unable to start MQTT client');
+        return;
+      }
+    }
+
     final builder = MqttClientPayloadBuilder();
 
     if (parser.dataRegex != null) {
@@ -189,7 +236,9 @@ class DataManager with ChangeNotifier {
       final textMatch = regex.firstMatch(notification.text)?.group(0);
       final messageMatch = regex.firstMatch(notification.message)?.group(0);
       // check if first match equals the regexMatch
-      if (textMatch == notificationRule.regexMatch || messageMatch == notificationRule.regexMatch) {
+      if (textMatch == notificationRule.regexMatch ||
+          messageMatch == notificationRule.regexMatch ||
+          notificationRule.regexMatch == null) {
         if (textMatch != null) {
           logConsoleOutput(notification.packageName,
               'Notification regex match in text: ${notificationRule.regexMatch} in ${notificationRule.regex}');

@@ -11,19 +11,23 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-  final textEditingController = TextEditingController();
+  final mqttServerEditingController = TextEditingController();
+  final rulesURLEditingController = TextEditingController();
 
   void dispose() {
-    // Clean up the controller when the widget is removed from the widget tree.
-    textEditingController.dispose();
+    mqttServerEditingController.dispose();
+    rulesURLEditingController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final dataManager = Provider.of<DataManager>(context, listen: false);
-    if (textEditingController.text.isEmpty && dataManager.rulesURL != null) {
-      textEditingController.text = dataManager.rulesURL!;
+    if (mqttServerEditingController.text.isEmpty && dataManager.mqttServerURL != null) {
+      mqttServerEditingController.text = dataManager.mqttServerURL!;
+    }
+    if (rulesURLEditingController.text.isEmpty && dataManager.rulesURL != null) {
+      rulesURLEditingController.text = dataManager.rulesURL!;
     }
     return Scaffold(
       appBar: AppBar(
@@ -43,6 +47,38 @@ class _SettingsState extends State<Settings> {
               const TableRow(
                 children: [
                   Text(
+                    'MQTT Server',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              TableRow(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: TextField(
+                      controller: mqttServerEditingController,
+                      keyboardType: TextInputType.url,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      textInputAction: TextInputAction.done,
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(),
+                        labelText: 'MQTT URL',
+                      ),
+                      onSubmitted: (value) {
+                        dataManager.mqttServerURL = mqttServerEditingController.text;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const TableRow(
+                children: [
+                  Text(
                     'Public path to rules JSON',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -54,7 +90,7 @@ class _SettingsState extends State<Settings> {
               TableRow(
                 children: [
                   TextField(
-                    controller: textEditingController,
+                    controller: rulesURLEditingController,
                     keyboardType: TextInputType.url,
                     autocorrect: false,
                     enableSuggestions: false,
@@ -64,7 +100,7 @@ class _SettingsState extends State<Settings> {
                       labelText: 'https://link.to/rules.json',
                     ),
                     onSubmitted: (value) {
-                      dataManager.rulesURL = textEditingController.text;
+                      dataManager.rulesURL = rulesURLEditingController.text;
                       dataManager.reloadRules();
                     },
                   ),
@@ -108,7 +144,13 @@ class _SettingsState extends State<Settings> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                 ),
-                              )
+                              ),
+                              Text(
+                                rule.packageName,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                             crossAxisAlignment: CrossAxisAlignment.start,
                           ),
