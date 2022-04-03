@@ -121,13 +121,14 @@ class DataManager with ChangeNotifier {
     final builder = MqttClientPayloadBuilder();
     builder.addInt(rules.length);
     _mqttServerClient?.publishMessage('notification-mqtt-rules-loaded', MqttQos.exactlyOnce, builder.payload!);
+    logConsoleOutput(null, 'rules reloaded');
   }
 
   // MQTT
 
   Future<void> _startMQTTServerClient() async {
     if (mqttServerURL == null) {
-      print('MQTT server url undefined');
+      print('[MQTT] server url undefined');
       return;
     }
 
@@ -137,7 +138,7 @@ class DataManager with ChangeNotifier {
     client.logging(on: false);
     client.setProtocolV311();
     client.keepAlivePeriod = 20;
-//    client.onDisconnected = onDisconnected;
+    client.onDisconnected = _onMQTTDisconnected;
 //    client.onSubscribed = onSubscribed;
 
     final connMess = MqttConnectMessage()
@@ -149,18 +150,18 @@ class DataManager with ChangeNotifier {
     client.connectionMessage = connMess;
 
     try {
-      await client.connect();
+      await client.connect('android', 'LWK3^C#!c4NMQ#oEPBWuTkbk^@K@OLn#79*AEOmNcs2Ms');
     } on Exception catch (e) {
-      print('EXAMPLE::client exception - $e');
+      print('[MQTT] client exception - $e');
       client.disconnect();
     }
 
     /// Check we are connected
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
-      print('EXAMPLE::Mosquitto client connected');
+      print('[MQTT] Mosquitto client connected');
     } else {
       print(
-          'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, state is ${client.connectionStatus!.state}');
+          '[MQTT] ERROR Mosquitto client connection failed - disconnecting, state is ${client.connectionStatus!.state}');
       client.disconnect();
       return;
     }
@@ -168,11 +169,16 @@ class DataManager with ChangeNotifier {
     _mqttServerClient = client;
   }
 
+  void _onMQTTDisconnected() {
+    _mqttServerClient = null;
+    print('[MQTT] Mosquitto client disconnected');
+  }
+
   Future<void> _publishMQTTMessage(DataModel.Notification notification, NotificationMQTTRule parser) async {
     if (_mqttServerClient == null) {
       await _startMQTTServerClient();
       if (_mqttServerClient == null) {
-        print('unable to start MQTT client');
+        print('[MQTT] unable to start MQTT client');
         return;
       }
     }
@@ -194,6 +200,7 @@ class DataManager with ChangeNotifier {
         builder.addString(messageMatch);
       }
     }
+    print('[MQTT] publish to ${parser.publishTopic}: ${builder.payload}');
     _mqttServerClient?.publishMessage(parser.publishTopic, MqttQos.exactlyOnce, builder.payload!);
   }
 
@@ -227,6 +234,13 @@ class DataManager with ChangeNotifier {
   }
 
   void _processRemoteNotification(DataModel.Notification notification) {
+    // check for reload notification
+    if (notification.packageName == 'io.homeassistant.companion.android' &&
+        notification.text == 'Notification MQTT' &&
+        notification.message == 'reload') {
+      reloadRules();
+    }
+
     var matches = List<NotificationMQTTRule>.empty(growable: true);
 
     for (var notificationRule in rules) {
