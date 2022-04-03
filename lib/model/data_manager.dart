@@ -25,7 +25,6 @@ class DataManager with ChangeNotifier {
   final http.Client _client = http.Client();
   AndroidNotificationListener? _notifications;
   StreamSubscription<NotifierListenerEvent>? _subscription;
-  final List<ConsoleOutput> _consoleOutput = List.empty(growable: true);
   final List<DataModel.ProcessedNotification> _processedNotifications = List.empty(growable: true);
   MqttServerClient? _mqttServerClient;
   List<ApplicationWithIcon> _apps = List.empty();
@@ -34,7 +33,33 @@ class DataManager with ChangeNotifier {
     _loadSettings();
     _loadApps();
     _startMQTTServerClient();
+    reloadRules();
+    _startRemoteNotificationListener();
+
+    Timer.periodic(const Duration(hours: 1), (timer) {
+      reloadRules();
+    });
   }
+
+  Future<void> _loadSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final loadedRulesURL = prefs.getString(SharedPreferenceKey.rulesURL.toString());
+    if (loadedRulesURL != null) {
+      rulesURL = loadedRulesURL;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadApps() async {
+    List<Application> apps = await DeviceApps.getInstalledApplications(
+        onlyAppsWithLaunchIntent: true, includeAppIcons: true, includeSystemApps: true);
+    List<ApplicationWithIcon> appsWithIcons =
+        apps.map<ApplicationWithIcon>((app) => app as ApplicationWithIcon).toList();
+    _apps = appsWithIcons;
+    notifyListeners();
+  }
+
+  // Reload rules
 
   Future<List<NotificationMQTTRule>> reloadRules() async {
     if (rulesURL == null) {
@@ -64,23 +89,7 @@ class DataManager with ChangeNotifier {
     _mqttServerClient?.publishMessage('notification-mqtt-rules-loaded', MqttQos.exactlyOnce, builder.payload!);
   }
 
-  Future<void> _loadSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final loadedRulesURL = prefs.getString(SharedPreferenceKey.rulesURL.toString());
-    if (loadedRulesURL != null) {
-      rulesURL = loadedRulesURL;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _loadApps() async {
-    List<Application> apps = await DeviceApps.getInstalledApplications(
-        onlyAppsWithLaunchIntent: true, includeAppIcons: true, includeSystemApps: true);
-    List<ApplicationWithIcon> appsWithIcons =
-        apps.map<ApplicationWithIcon>((app) => app as ApplicationWithIcon).toList();
-    _apps = appsWithIcons;
-    notifyListeners();
-  }
+  // MQTT
 
   Future<void> _startMQTTServerClient() async {
     final client = MqttServerClient('homeassistant.local', '');
@@ -120,21 +129,42 @@ class DataManager with ChangeNotifier {
     _mqttServerClient = client;
   }
 
-  void startListening() {
+  Future<void> _publishMQTTMessage(DataModel.Notification notification, NotificationMQTTRule parser) async {
+    final builder = MqttClientPayloadBuilder();
+
+    if (parser.dataRegex != null) {
+      final regex = RegExp(parser.dataRegex!);
+      final textMatch = regex.firstMatch(notification.text)?.group(0);
+      final messageMatch = regex.firstMatch(notification.message)?.group(0);
+      if (textMatch != null) {
+        logConsoleOutput(notification.packageName, 'Notification data regex match: $textMatch in ${parser.dataRegex!}');
+        builder.addString(textMatch);
+      }
+      if (messageMatch != null) {
+        logConsoleOutput(notification.packageName, 'Notification regex match: $messageMatch in ${parser.dataRegex!}');
+        builder.addString(messageMatch);
+      }
+    }
+    _mqttServerClient?.publishMessage(parser.publishTopic, MqttQos.exactlyOnce, builder.payload!);
+  }
+
+  // Remote notifications
+
+  void _startRemoteNotificationListener() {
     var listener = AndroidNotificationListener();
     _notifications = listener;
     try {
-      _subscription = listener.notificationStream?.listen(_onData);
+      _subscription = listener.notificationStream?.listen(_onRemoteNotificationReceived);
     } on NotifierListener catch (exception) {
       print(exception);
     }
   }
 
-  void stopListening() {
+  void _stopRemoteNotificationListening() {
     _subscription?.cancel();
   }
 
-  void _onData(NotifierListenerEvent event) {
+  void _onRemoteNotificationReceived(NotifierListenerEvent event) {
     logConsoleOutput(event.packageName,
         'Notification received for ${event.packageName}:\nText: ${event.packageText}\nMessage: ${event.packageMessage}');
 
@@ -144,10 +174,10 @@ class DataManager with ChangeNotifier {
       ..text = event.packageText
       ..timestamp = event.timeStamp);
 
-    _processNotification(notification);
+    _processRemoteNotification(notification);
   }
 
-  void _processNotification(DataModel.Notification notification) {
+  void _processRemoteNotification(DataModel.Notification notification) {
     var matches = List<NotificationMQTTRule>.empty(growable: true);
 
     for (var notificationRule in rules) {
@@ -168,6 +198,9 @@ class DataManager with ChangeNotifier {
           logConsoleOutput(notification.packageName,
               'Notification regex match in message: ${notificationRule.regexMatch} in ${notificationRule.regex}');
         }
+        if (notificationRule.regexMatch == null) {
+          logConsoleOutput(notification.packageName, 'Notification regex match');
+        }
 
         matches.add(notificationRule);
 
@@ -183,37 +216,20 @@ class DataManager with ChangeNotifier {
     _processedNotifications.insert(0, processedNotification);
   }
 
-  Future<void> _publishMQTTMessage(DataModel.Notification notification, NotificationMQTTRule parser) async {
-    final builder = MqttClientPayloadBuilder();
-
-    if (parser.dataRegex != null) {
-      final regex = RegExp(parser.dataRegex!);
-      final textMatch = regex.firstMatch(notification.text)?.group(0);
-      final messageMatch = regex.firstMatch(notification.message)?.group(0);
-      if (textMatch != null) {
-        logConsoleOutput(notification.packageName, 'Notification data regex match: $textMatch in ${parser.dataRegex!}');
-        builder.addString(textMatch);
-      }
-      if (messageMatch != null) {
-        logConsoleOutput(notification.packageName, 'Notification regex match: $messageMatch in ${parser.dataRegex!}');
-        builder.addString(messageMatch);
-      }
-    }
-    _mqttServerClient?.publishMessage(parser.publishTopic, MqttQos.exactlyOnce, builder.payload!);
-  }
+  // Console output
 
   void logConsoleOutput(String? packageName, String message) {
     final app = _apps.firstWhereOrNull((app) => app.packageName == packageName);
-    final consoleOutput = ConsoleOutput((b) => b
+    final output = ConsoleOutput((b) => b
       ..timestamp = DateTime.now()
       ..message = message
       ..icon = app?.icon);
-    _consoleOutput.insert(0, consoleOutput);
+    consoleOutput.insert(0, output);
     notifyListeners();
   }
 
   void clearConsoleLogs() {
-    _consoleOutput.clear();
+    consoleOutput.clear();
     notifyListeners();
   }
 }

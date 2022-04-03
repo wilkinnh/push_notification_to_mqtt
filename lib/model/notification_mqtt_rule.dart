@@ -14,7 +14,7 @@ abstract class NotificationMQTTRule implements Built<NotificationMQTTRule, Notif
 
   String get regex;
 
-  String get regexMatch;
+  String? get regexMatch;
 
   String? get dataRegex;
 

@@ -12,14 +12,11 @@ class ConsoleLogList extends StatefulWidget {
 }
 
 class _ConsoleLogListState extends State<ConsoleLogList> {
-  DataManager dataManager(BuildContext context) {
-    return context.watch<DataManager>();
-  }
-
   void clearConsoleLog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final dataManager = Provider.of<DataManager>(context);
         return AlertDialog(
           title: const Text('Clear Console Log?'),
           content: const Text('This action cannot be undone.'),
@@ -36,7 +33,7 @@ class _ConsoleLogListState extends State<ConsoleLogList> {
                 style: TextStyle(color: Colors.red),
               ),
               onPressed: () {
-                dataManager(context).clearConsoleLogs();
+                dataManager.clearConsoleLogs();
                 Navigator.of(context).pop();
               },
             ),
@@ -48,6 +45,7 @@ class _ConsoleLogListState extends State<ConsoleLogList> {
 
   @override
   Widget build(BuildContext context) {
+    final dataManager = Provider.of<DataManager>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Push Notifications to MQTT'),
@@ -73,15 +71,18 @@ class _ConsoleLogListState extends State<ConsoleLogList> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-            child: Text(
-                '${dataManager(context).rules.length} rule${dataManager(context).rules.length == 1 ? '' : 's'} loaded'),
+            child: Text('${dataManager.rules.length} rule${dataManager.rules.length == 1 ? '' : 's'} loaded'),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+            child: Text('${dataManager.consoleOutput.length} console output'),
           ),
           const Divider(height: 1),
           SingleChildScrollView(
             child: Table(
               border: TableBorder.all(color: Colors.grey),
-              children: List<TableRow>.generate(dataManager(context).consoleOutput.length, (index) {
-                final consoleOutput = dataManager(context).consoleOutput[index];
+              children: List<TableRow>.generate(dataManager.consoleOutput.length, (index) {
+                final consoleOutput = dataManager.consoleOutput[index];
                 return TableRow(
                   children: [
                     Padding(
@@ -90,12 +91,17 @@ class _ConsoleLogListState extends State<ConsoleLogList> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(5.0),
-                            child:
-                                consoleOutput.icon != null ? Image.memory(consoleOutput.icon!) : const Icon(Icons.apps),
+                            child: consoleOutput.icon != null
+                                ? Image.memory(
+                                    consoleOutput.icon!,
+                                    width: 44,
+                                    height: 44,
+                                  )
+                                : const Icon(Icons.apps, size: 20),
                           ),
                           Flexible(
                             child: Text(
-                              "[${consoleOutput.timestamp.toString()}] " + consoleOutput.message,
+                              '[${consoleOutput.timestamp.toString()}] ${consoleOutput.message}',
                               style: const TextStyle(
                                 fontSize: 12,
                               ),

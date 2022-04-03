@@ -95,18 +95,25 @@ class _SettingsState extends State<Settings> {
                       padding: const EdgeInsets.fromLTRB(0, 5, 10, 5),
                       child: Row(
                         children: [
-                          Text(
-                            rule.regexMatch,
-                            style: const TextStyle(
-                              fontSize: 16,
-                            ),
+                          Column(
+                            children: [
+                              Text(
+                                rule.regexMatch ?? '*',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                'Regex: ${rule.regex}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                              )
+                            ],
+                            crossAxisAlignment: CrossAxisAlignment.start,
                           ),
-                          Text(
-                            rule.regex,
-                            style: const TextStyle(
-                              fontSize: 12,
-                            ),
-                          ),
+                          const Spacer(),
+                          Text(rule.publishTopic),
                         ],
                       ),
                     ),

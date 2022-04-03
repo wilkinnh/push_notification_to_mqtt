@@ -30,14 +30,18 @@ class _$NotificationMQTTRuleSerializer
       'regex',
       serializers.serialize(object.regex,
           specifiedType: const FullType(String)),
-      'regexMatch',
-      serializers.serialize(object.regexMatch,
-          specifiedType: const FullType(String)),
       'publishTopic',
       serializers.serialize(object.publishTopic,
           specifiedType: const FullType(String)),
     ];
     Object? value;
+    value = object.regexMatch;
+    if (value != null) {
+      result
+        ..add('regexMatch')
+        ..add(serializers.serialize(value,
+            specifiedType: const FullType(String)));
+    }
     value = object.dataRegex;
     if (value != null) {
       result
@@ -70,7 +74,7 @@ class _$NotificationMQTTRuleSerializer
           break;
         case 'regexMatch':
           result.regexMatch = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
+              specifiedType: const FullType(String)) as String?;
           break;
         case 'dataRegex':
           result.dataRegex = serializers.deserialize(value,
@@ -93,7 +97,7 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
   @override
   final String regex;
   @override
-  final String regexMatch;
+  final String? regexMatch;
   @override
   final String? dataRegex;
   @override
@@ -106,7 +110,7 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
   _$NotificationMQTTRule._(
       {required this.packageName,
       required this.regex,
-      required this.regexMatch,
+      this.regexMatch,
       this.dataRegex,
       required this.publishTopic})
       : super._() {
@@ -114,8 +118,6 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
         packageName, 'NotificationMQTTRule', 'packageName');
     BuiltValueNullFieldError.checkNotNull(
         regex, 'NotificationMQTTRule', 'regex');
-    BuiltValueNullFieldError.checkNotNull(
-        regexMatch, 'NotificationMQTTRule', 'regexMatch');
     BuiltValueNullFieldError.checkNotNull(
         publishTopic, 'NotificationMQTTRule', 'publishTopic');
   }
@@ -220,8 +222,7 @@ class NotificationMQTTRuleBuilder
                 packageName, 'NotificationMQTTRule', 'packageName'),
             regex: BuiltValueNullFieldError.checkNotNull(
                 regex, 'NotificationMQTTRule', 'regex'),
-            regexMatch: BuiltValueNullFieldError.checkNotNull(
-                regexMatch, 'NotificationMQTTRule', 'regexMatch'),
+            regexMatch: regexMatch,
             dataRegex: dataRegex,
             publishTopic: BuiltValueNullFieldError.checkNotNull(
                 publishTopic, 'NotificationMQTTRule', 'publishTopic'));
