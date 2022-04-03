@@ -15,7 +15,7 @@ import 'notification_mqtt_rule.dart';
 import 'notification.dart' as DataModel;
 import 'console_output.dart';
 
-enum SharedPreferenceKey { rulesURL, mqttServerURL }
+enum SharedPreferenceKey { rulesURL, mqttServerURL, mqttUsername, mqttPassword }
 
 class DataManager with ChangeNotifier {
   List<NotificationMQTTRule> rules = [];
@@ -23,6 +23,8 @@ class DataManager with ChangeNotifier {
 
   String? _rulesURL;
   String? _mqttServerURL;
+  String? _mqttUsername;
+  String? _mqttPassword;
 
   final http.Client _client = http.Client();
   AndroidNotificationListener? _notifications;
@@ -73,11 +75,7 @@ class DataManager with ChangeNotifier {
 
   set rulesURL(String? rulesURL) {
     _rulesURL = rulesURL;
-    if (rulesURL != null) {
-      SharedPreferences.getInstance().then((prefs) {
-        prefs.setString(SharedPreferenceKey.rulesURL.toString(), rulesURL);
-      });
-    }
+    _setPreference(SharedPreferenceKey.rulesURL.toString(), rulesURL);
   }
 
   String? get mqttServerURL {
@@ -86,10 +84,33 @@ class DataManager with ChangeNotifier {
 
   set mqttServerURL(String? mqttServerURL) {
     _mqttServerURL = mqttServerURL;
-    if (mqttServerURL != null) {
-      SharedPreferences.getInstance().then((prefs) {
-        prefs.setString(SharedPreferenceKey.mqttServerURL.toString(), mqttServerURL);
-      });
+    _setPreference(SharedPreferenceKey.mqttServerURL.toString(), mqttServerURL);
+  }
+
+  String? get mqttUsername {
+    return _mqttUsername;
+  }
+
+  set mqttUsername(String? mqttUsername) {
+    _mqttUsername = mqttUsername;
+    _setPreference(SharedPreferenceKey.mqttUsername.toString(), mqttUsername);
+  }
+
+  String? get mqttPassword {
+    return _mqttPassword;
+  }
+
+  set mqttPassword(String? mqttPassword) {
+    _mqttPassword = mqttPassword;
+    _setPreference(SharedPreferenceKey.mqttPassword.toString(), mqttPassword);
+  }
+
+  Future<void> _setPreference(String key, String? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value != null) {
+      prefs.setString(key, value);
+    } else {
+      prefs.remove(key);
     }
   }
 
@@ -150,7 +171,11 @@ class DataManager with ChangeNotifier {
     client.connectionMessage = connMess;
 
     try {
-      await client.connect('android', 'LWK3^C#!c4NMQ#oEPBWuTkbk^@K@OLn#79*AEOmNcs2Ms');
+      if (mqttUsername != null && mqttPassword != null) {
+        await client.connect(mqttUsername, mqttPassword);
+      } else {
+        await client.connect();
+      }
     } on Exception catch (e) {
       print('[MQTT] client exception - $e');
       client.disconnect();

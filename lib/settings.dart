@@ -11,24 +11,38 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-  final mqttServerEditingController = TextEditingController();
-  final rulesURLEditingController = TextEditingController();
+  final _mqttServerEditingController = TextEditingController();
+  final _mqttUsernameController = TextEditingController();
+  final _mqttPasswordController = TextEditingController();
+  final _rulesURLEditingController = TextEditingController();
+
+  void initializeControllers(DataManager dataManager) {
+    if (_mqttServerEditingController.text.isEmpty && dataManager.mqttServerURL != null) {
+      _mqttServerEditingController.text = dataManager.mqttServerURL!;
+    }
+    if (_mqttUsernameController.text.isEmpty && dataManager.mqttUsername != null) {
+      _mqttUsernameController.text = dataManager.mqttUsername!;
+    }
+    if (_mqttPasswordController.text.isEmpty && dataManager.mqttPassword != null) {
+      _mqttPasswordController.text = dataManager.mqttPassword!;
+    }
+    if (_rulesURLEditingController.text.isEmpty && dataManager.rulesURL != null) {
+      _rulesURLEditingController.text = dataManager.rulesURL!;
+    }
+  }
 
   void dispose() {
-    mqttServerEditingController.dispose();
-    rulesURLEditingController.dispose();
+    _mqttServerEditingController.dispose();
+    _mqttUsernameController.dispose();
+    _mqttPasswordController.dispose();
+    _rulesURLEditingController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final dataManager = Provider.of<DataManager>(context, listen: false);
-    if (mqttServerEditingController.text.isEmpty && dataManager.mqttServerURL != null) {
-      mqttServerEditingController.text = dataManager.mqttServerURL!;
-    }
-    if (rulesURLEditingController.text.isEmpty && dataManager.rulesURL != null) {
-      rulesURLEditingController.text = dataManager.rulesURL!;
-    }
+    initializeControllers(dataManager);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -57,20 +71,57 @@ class _SettingsState extends State<Settings> {
               ),
               TableRow(
                 children: [
+                  TextField(
+                    controller: _mqttServerEditingController,
+                    keyboardType: TextInputType.url,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(),
+                      labelText: 'MQTT URL',
+                    ),
+                    onSubmitted: (value) {
+                      dataManager.mqttServerURL = _mqttServerEditingController.text;
+                    },
+                  ),
+                ],
+              ),
+              TableRow(
+                children: [
+                  TextField(
+                    controller: _mqttUsernameController,
+                    keyboardType: TextInputType.text,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(),
+                      labelText: 'MQTT username',
+                    ),
+                    onSubmitted: (value) {
+                      dataManager.mqttUsername = _mqttUsernameController.text;
+                    },
+                  ),
+                ],
+              ),
+              TableRow(
+                children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: TextField(
-                      controller: mqttServerEditingController,
-                      keyboardType: TextInputType.url,
+                      controller: _mqttPasswordController,
+                      keyboardType: TextInputType.text,
+                      obscureText: true,
                       autocorrect: false,
                       enableSuggestions: false,
                       textInputAction: TextInputAction.done,
                       decoration: const InputDecoration(
                         border: UnderlineInputBorder(),
-                        labelText: 'MQTT URL',
+                        labelText: 'MQTT password',
                       ),
                       onSubmitted: (value) {
-                        dataManager.mqttServerURL = mqttServerEditingController.text;
+                        dataManager.mqttPassword = _mqttPasswordController.text;
                       },
                     ),
                   ),
@@ -90,7 +141,7 @@ class _SettingsState extends State<Settings> {
               TableRow(
                 children: [
                   TextField(
-                    controller: rulesURLEditingController,
+                    controller: _rulesURLEditingController,
                     keyboardType: TextInputType.url,
                     autocorrect: false,
                     enableSuggestions: false,
@@ -100,7 +151,7 @@ class _SettingsState extends State<Settings> {
                       labelText: 'https://link.to/rules.json',
                     ),
                     onSubmitted: (value) {
-                      dataManager.rulesURL = rulesURLEditingController.text;
+                      dataManager.rulesURL = _rulesURLEditingController.text;
                       dataManager.reloadRules();
                     },
                   ),
