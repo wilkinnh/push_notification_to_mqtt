@@ -5,10 +5,9 @@ extension ExampleRules on NotificationMQTTRule {
     return [
       NotificationMQTTRule((b) => b
         ..packageName = 'com.h4wkd.test'
-        ..regex = '^(.*) scores!\$'
-        ..regexMatch = 'Arsenal'
-        ..dataRegex = '^.+\\[(\\d)\\].*\$'
-        ..publishTopic = 'android-notification'),
+        ..titleRegex = '^Arsenal scores!\$'
+        ..messageRegex = 'Arsenal'
+        ..publishTopic = 'arsenal-goal'),
     ];
   }
 }

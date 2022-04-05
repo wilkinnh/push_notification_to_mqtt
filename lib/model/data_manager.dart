@@ -46,10 +46,22 @@ class DataManager with ChangeNotifier {
 
   Future<void> _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
     final loadedMQTTServerURL = prefs.getString(SharedPreferenceKey.mqttServerURL.toString());
     if (loadedMQTTServerURL != null) {
       _mqttServerURL = loadedMQTTServerURL;
     }
+
+    final loadedMQTTUsername = prefs.getString(SharedPreferenceKey.mqttUsername.toString());
+    if (loadedMQTTUsername != null) {
+      _mqttUsername = loadedMQTTUsername;
+    }
+
+    final loadedMQTTPassword = prefs.getString(SharedPreferenceKey.mqttPassword.toString());
+    if (loadedMQTTPassword != null) {
+      _mqttPassword = loadedMQTTPassword;
+    }
+
     final loadedRulesURL = prefs.getString(SharedPreferenceKey.rulesURL.toString());
     if (loadedRulesURL != null) {
       _rulesURL = loadedRulesURL;
@@ -140,9 +152,9 @@ class DataManager with ChangeNotifier {
   Future<void> _notifyReload() async {
     // sent MQTT message after successful reload
     final builder = MqttClientPayloadBuilder();
-    builder.addInt(rules.length);
+    builder.addString('${rules.length}');
     _mqttServerClient?.publishMessage('notification-mqtt-rules-loaded', MqttQos.exactlyOnce, builder.payload!);
-    logConsoleOutput(null, 'rules reloaded');
+    logConsoleOutput(null, '${builder.payload!} rules reloaded');
   }
 
   // MQTT
@@ -199,7 +211,7 @@ class DataManager with ChangeNotifier {
     print('[MQTT] Mosquitto client disconnected');
   }
 
-  Future<void> _publishMQTTMessage(DataModel.Notification notification, NotificationMQTTRule parser) async {
+  Future<void> _publishMQTTMessage(DataModel.Notification notification, NotificationMQTTRule rule) async {
     if (_mqttServerClient == null) {
       await _startMQTTServerClient();
       if (_mqttServerClient == null) {
@@ -208,25 +220,58 @@ class DataManager with ChangeNotifier {
       }
     }
 
-    final builder = MqttClientPayloadBuilder();
+    final matchText = '${notification.text} ${notification.message}';
+    List<String> dataParameters = [];
 
-    if (parser.dataRegex != null) {
-      final regex = RegExp(parser.dataRegex!);
-      final textMatch = regex.firstMatch(notification.text)?.group(0);
-      final messageMatch = regex.firstMatch(notification.message)?.group(0);
-      if (textMatch != null) {
-        logConsoleOutput(
-            notification.packageName, 'Notification data regex match in text: $textMatch in ${parser.dataRegex!}');
-        builder.addString(textMatch);
-      }
-      if (messageMatch != null) {
-        logConsoleOutput(notification.packageName,
-            'Notification data regex match in message: $messageMatch in ${parser.dataRegex!}');
-        builder.addString(messageMatch);
+    if (rule.titleRegex != null) {
+      final regex = RegExp(rule.titleRegex!);
+      final match = regex.firstMatch(matchText);
+      if (match != null) {
+        for (var i = 0; i < match.groupCount; i++) {
+          final groupValue = match.group(i);
+          if (groupValue != null) {
+            // replace ordered value, i.e. $0 with group 0 value
+            dataParameters.add(groupValue);
+          }
+        }
       }
     }
-    print('[MQTT] publish to ${parser.publishTopic}: ${builder.payload}');
-    _mqttServerClient?.publishMessage(parser.publishTopic, MqttQos.exactlyOnce, builder.payload!);
+
+    if (rule.messageRegex != null) {
+      final regex = RegExp(rule.messageRegex!);
+      final match = regex.firstMatch(matchText);
+      if (match != null) {
+        for (var i = 0; i < match.groupCount; i++) {
+          final groupValue = match.group(i);
+          if (groupValue != null) {
+            // replace ordered value, i.e. $0 with group 0 value
+            dataParameters.add(groupValue);
+          }
+        }
+      }
+    }
+
+    final builder = MqttClientPayloadBuilder();
+
+    if (rule.dataTemplate != null) {
+      var template = rule.dataTemplate!;
+      for (var i = 0; i < dataParameters.length; i++) {
+        final variableName = '\$$i';
+        final value = dataParameters[i];
+        template.replaceFirst(variableName, value);
+      }
+      builder.addString(template);
+    } else {
+      for (var i = 0; i < dataParameters.length; i++) {
+        builder.addString(dataParameters[i]);
+      }
+    }
+
+    if (builder.payload != null) {
+      print('[MQTT] publish to ${rule.publishTopic}: ${builder.payload}');
+      logConsoleOutput(notification.packageName, 'MQTT ${rule.publishTopic}: ${builder.payload}');
+      _mqttServerClient?.publishMessage(rule.publishTopic, MqttQos.exactlyOnce, builder.payload!);
+    }
   }
 
   // Remote notifications
@@ -273,23 +318,25 @@ class DataManager with ChangeNotifier {
         // only match if packageNames match
         return;
       }
-      final regex = RegExp(notificationRule.regex);
-      final textMatch = regex.firstMatch(notification.text)?.group(0);
-      final messageMatch = regex.firstMatch(notification.message)?.group(0);
-      // check if first match equals the regexMatch
-      if (textMatch == notificationRule.regexMatch ||
-          messageMatch == notificationRule.regexMatch ||
-          notificationRule.regexMatch == null) {
-        if (notificationRule.regexMatch == null) {
-          logConsoleOutput(notification.packageName, 'Notification regex match');
-        } else if (textMatch != null) {
-          logConsoleOutput(notification.packageName,
-              'Notification regex match in text: ${notificationRule.regexMatch} in ${notificationRule.regex}');
-        } else if (messageMatch != null) {
-          logConsoleOutput(notification.packageName,
-              'Notification regex match in message: ${notificationRule.regexMatch} in ${notificationRule.regex}');
+      bool hasRegexMatch = false;
+      if (notificationRule.titleRegex != null) {
+        final regex = RegExp(notificationRule.titleRegex!);
+        final hasMatch = regex.hasMatch(notification.text);
+        if (hasMatch) {
+          logConsoleOutput(notification.packageName, 'regex match in title: ${notificationRule.titleRegex}');
+          hasRegexMatch = true;
         }
-
+      }
+      if (notificationRule.messageRegex != null) {
+        final regex = RegExp(notificationRule.messageRegex!);
+        final hasMatch = regex.hasMatch(notification.message);
+        if (hasMatch) {
+          logConsoleOutput(notification.packageName, 'regex match in message: ${notificationRule.messageRegex}');
+          hasRegexMatch = true;
+        }
+      }
+      // check if first match equals the regexMatch
+      if (hasRegexMatch) {
         matches.add(notificationRule);
 
         // publish MQTT message

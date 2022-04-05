@@ -27,25 +27,29 @@ class _$NotificationMQTTRuleSerializer
       'packageName',
       serializers.serialize(object.packageName,
           specifiedType: const FullType(String)),
-      'regex',
-      serializers.serialize(object.regex,
-          specifiedType: const FullType(String)),
       'publishTopic',
       serializers.serialize(object.publishTopic,
           specifiedType: const FullType(String)),
     ];
     Object? value;
-    value = object.regexMatch;
+    value = object.titleRegex;
     if (value != null) {
       result
-        ..add('regexMatch')
+        ..add('titleRegex')
         ..add(serializers.serialize(value,
             specifiedType: const FullType(String)));
     }
-    value = object.dataRegex;
+    value = object.messageRegex;
     if (value != null) {
       result
-        ..add('dataRegex')
+        ..add('messageRegex')
+        ..add(serializers.serialize(value,
+            specifiedType: const FullType(String)));
+    }
+    value = object.dataTemplate;
+    if (value != null) {
+      result
+        ..add('dataTemplate')
         ..add(serializers.serialize(value,
             specifiedType: const FullType(String)));
     }
@@ -68,16 +72,16 @@ class _$NotificationMQTTRuleSerializer
           result.packageName = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String;
           break;
-        case 'regex':
-          result.regex = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          break;
-        case 'regexMatch':
-          result.regexMatch = serializers.deserialize(value,
+        case 'titleRegex':
+          result.titleRegex = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String?;
           break;
-        case 'dataRegex':
-          result.dataRegex = serializers.deserialize(value,
+        case 'messageRegex':
+          result.messageRegex = serializers.deserialize(value,
+              specifiedType: const FullType(String)) as String?;
+          break;
+        case 'dataTemplate':
+          result.dataTemplate = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String?;
           break;
         case 'publishTopic':
@@ -95,11 +99,11 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
   @override
   final String packageName;
   @override
-  final String regex;
+  final String? titleRegex;
   @override
-  final String? regexMatch;
+  final String? messageRegex;
   @override
-  final String? dataRegex;
+  final String? dataTemplate;
   @override
   final String publishTopic;
 
@@ -109,15 +113,13 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
 
   _$NotificationMQTTRule._(
       {required this.packageName,
-      required this.regex,
-      this.regexMatch,
-      this.dataRegex,
+      this.titleRegex,
+      this.messageRegex,
+      this.dataTemplate,
       required this.publishTopic})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(
         packageName, 'NotificationMQTTRule', 'packageName');
-    BuiltValueNullFieldError.checkNotNull(
-        regex, 'NotificationMQTTRule', 'regex');
     BuiltValueNullFieldError.checkNotNull(
         publishTopic, 'NotificationMQTTRule', 'publishTopic');
   }
@@ -136,9 +138,9 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
     if (identical(other, this)) return true;
     return other is NotificationMQTTRule &&
         packageName == other.packageName &&
-        regex == other.regex &&
-        regexMatch == other.regexMatch &&
-        dataRegex == other.dataRegex &&
+        titleRegex == other.titleRegex &&
+        messageRegex == other.messageRegex &&
+        dataTemplate == other.dataTemplate &&
         publishTopic == other.publishTopic;
   }
 
@@ -146,9 +148,9 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
   int get hashCode {
     return $jf($jc(
         $jc(
-            $jc($jc($jc(0, packageName.hashCode), regex.hashCode),
-                regexMatch.hashCode),
-            dataRegex.hashCode),
+            $jc($jc($jc(0, packageName.hashCode), titleRegex.hashCode),
+                messageRegex.hashCode),
+            dataTemplate.hashCode),
         publishTopic.hashCode));
   }
 
@@ -156,9 +158,9 @@ class _$NotificationMQTTRule extends NotificationMQTTRule {
   String toString() {
     return (newBuiltValueToStringHelper('NotificationMQTTRule')
           ..add('packageName', packageName)
-          ..add('regex', regex)
-          ..add('regexMatch', regexMatch)
-          ..add('dataRegex', dataRegex)
+          ..add('titleRegex', titleRegex)
+          ..add('messageRegex', messageRegex)
+          ..add('dataTemplate', dataTemplate)
           ..add('publishTopic', publishTopic))
         .toString();
   }
@@ -172,17 +174,17 @@ class NotificationMQTTRuleBuilder
   String? get packageName => _$this._packageName;
   set packageName(String? packageName) => _$this._packageName = packageName;
 
-  String? _regex;
-  String? get regex => _$this._regex;
-  set regex(String? regex) => _$this._regex = regex;
+  String? _titleRegex;
+  String? get titleRegex => _$this._titleRegex;
+  set titleRegex(String? titleRegex) => _$this._titleRegex = titleRegex;
 
-  String? _regexMatch;
-  String? get regexMatch => _$this._regexMatch;
-  set regexMatch(String? regexMatch) => _$this._regexMatch = regexMatch;
+  String? _messageRegex;
+  String? get messageRegex => _$this._messageRegex;
+  set messageRegex(String? messageRegex) => _$this._messageRegex = messageRegex;
 
-  String? _dataRegex;
-  String? get dataRegex => _$this._dataRegex;
-  set dataRegex(String? dataRegex) => _$this._dataRegex = dataRegex;
+  String? _dataTemplate;
+  String? get dataTemplate => _$this._dataTemplate;
+  set dataTemplate(String? dataTemplate) => _$this._dataTemplate = dataTemplate;
 
   String? _publishTopic;
   String? get publishTopic => _$this._publishTopic;
@@ -194,9 +196,9 @@ class NotificationMQTTRuleBuilder
     final $v = _$v;
     if ($v != null) {
       _packageName = $v.packageName;
-      _regex = $v.regex;
-      _regexMatch = $v.regexMatch;
-      _dataRegex = $v.dataRegex;
+      _titleRegex = $v.titleRegex;
+      _messageRegex = $v.messageRegex;
+      _dataTemplate = $v.dataTemplate;
       _publishTopic = $v.publishTopic;
       _$v = null;
     }
@@ -220,10 +222,9 @@ class NotificationMQTTRuleBuilder
         new _$NotificationMQTTRule._(
             packageName: BuiltValueNullFieldError.checkNotNull(
                 packageName, 'NotificationMQTTRule', 'packageName'),
-            regex: BuiltValueNullFieldError.checkNotNull(
-                regex, 'NotificationMQTTRule', 'regex'),
-            regexMatch: regexMatch,
-            dataRegex: dataRegex,
+            titleRegex: titleRegex,
+            messageRegex: messageRegex,
+            dataTemplate: dataTemplate,
             publishTopic: BuiltValueNullFieldError.checkNotNull(
                 publishTopic, 'NotificationMQTTRule', 'publishTopic'));
     replace(_$result);

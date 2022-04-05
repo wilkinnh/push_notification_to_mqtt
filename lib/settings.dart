@@ -16,7 +16,7 @@ class _SettingsState extends State<Settings> {
   final _mqttPasswordController = TextEditingController();
   final _rulesURLEditingController = TextEditingController();
 
-  void initializeControllers(DataManager dataManager) {
+  void _initializeControllers(DataManager dataManager) {
     if (_mqttServerEditingController.text.isEmpty && dataManager.mqttServerURL != null) {
       _mqttServerEditingController.text = dataManager.mqttServerURL!;
     }
@@ -42,7 +42,7 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     final dataManager = Provider.of<DataManager>(context, listen: false);
-    initializeControllers(dataManager);
+    _initializeControllers(dataManager);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -185,15 +185,9 @@ class _SettingsState extends State<Settings> {
                           Column(
                             children: [
                               Text(
-                                rule.regexMatch ?? '*',
+                                rule.publishTopic,
                                 style: const TextStyle(
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Text(
-                                'Regex: ${rule.regex}',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 24,
                                 ),
                               ),
                               Text(
@@ -202,11 +196,32 @@ class _SettingsState extends State<Settings> {
                                   fontSize: 12,
                                 ),
                               ),
+                              Text(
+                                'Title regex: ${rule.titleRegex ?? '*'}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                'Message regex: ${rule.messageRegex ?? '*'}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (rule.dataTemplate != null)
+                                Text(
+                                  'Data template: ${rule.dataTemplate!}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                  ),
+                                ),
                             ],
                             crossAxisAlignment: CrossAxisAlignment.start,
                           ),
                           const Spacer(),
-                          Text(rule.publishTopic),
+                          Column(
+                            children: [],
+                          ),
                         ],
                       ),
                     ),

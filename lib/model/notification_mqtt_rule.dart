@@ -12,11 +12,11 @@ abstract class NotificationMQTTRule implements Built<NotificationMQTTRule, Notif
 
   String get packageName;
 
-  String get regex;
+  String? get titleRegex;
 
-  String? get regexMatch;
+  String? get messageRegex;
 
-  String? get dataRegex;
+  String? get dataTemplate;
 
   String get publishTopic;
 
