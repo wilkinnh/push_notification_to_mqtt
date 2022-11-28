@@ -1,6 +1,6 @@
 # Push Notification to MQTT
 
-Convert push notifications to MQTT messages
+Convert push notifications to MQTT messages. Trigger automations from 3rd party apps that may not have native integration into your smart home. Not only detect push notifications from 3rd party apps, but you can inspect the contents and trigger automations off those details as well.
 
 Supported platforms:
 
@@ -9,15 +9,17 @@ Supported platforms:
 | Android  | :white_check_mark: |
 | iOS      | :x:                |
 
-## Why use this?
+## Usage examples
 
-This app can allow you to create automations for your smart home based on 3rd party push notifications.
-
-### Basic usage
+### Bus alert
 
 Let's say you have an app that lets you know when the bus is nearby. Even if the bus app doesn't intergrate with your smart home, you can now pick up on those push notifications and trigger your home to flash the lights or announce on a speaker that the bus is almost here.
 
-### Advanced usage - Sports
+### Package delivery
+
+Got a package delivered by Amazon? You can pick up on their notification and trigger your home to alert you of your awaiting package.
+
+### Sport updates
 
 Want your home to celebrate with you when your team scores? You can pick up on the same push notifications that you already get from your favorite sports app and trigger automations for your home.
 
@@ -36,10 +38,12 @@ Rules contain the information needed to detemine a match and where to publish th
 }
 ```
 
-`packageName`: the 3rd party app's package name. If you don't know the package name, you can determine this by waiting for a push notification to be received and viewing the console output.
-`titleRegex`: regex pattern to match on the push notification title. If you want to capture a value within the title, add a capture group with `()`.
-`messageRegex`: regex pattern to match on the push notification message. If you want to capture a value within the title, add a capture group with `()`.
-`publishTopic`: topic to publish to your broker. If you captured a value from the title or message, the MQTT message will return the captured value.
+| Property       | Comment                                                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packageName`  | The 3rd party app's package name. If you don't know the package name, you can determine this by waiting for a push notification to be received and viewing the console output. |
+| `titleRegex`   | Regex pattern to match on the push notification title. If you want to capture a value within the title, add a capture group with `()`.                                         |
+| `messageRegex` | Regex pattern to match on the push notification message. If you want to capture a value within the title, add a capture group with `()`.                                       |
+| `publishTopic` | Topic to publish to your broker. If you captured a value from the title or message, the MQTT message will return the captured value.                                           |
 
 ## Configuration
 
@@ -53,7 +57,7 @@ You need to have an MQTT broker available to send messages. Username and passwor
 
 In order for the app to intercept 3rd party push notifications, you need to enable this capability in the system settings.
 
-Apps > Special access > Notification access
+> Apps > Special access > Notification access
 
 Make sure that 'Push Notification to MQTT' is enabled
 
@@ -77,7 +81,7 @@ data:
 
 Obviously update the service to point to the desired device, but it will look for that specific title and message and then kick off reloading the rules.
 
-## Real world usage - World Cup
+## Use Case - World Cup
 
 I wanted to create an automation that would trigger a few things in my house when a goal was scored in the World Cup. Those things include:
 
