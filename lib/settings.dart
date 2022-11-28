@@ -46,12 +46,6 @@ class _SettingsState extends State<Settings> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -197,13 +191,13 @@ class _SettingsState extends State<Settings> {
                                 ),
                               ),
                               Text(
-                                'Title regex: ${rule.titleRegex ?? '*'}',
+                                'Title regex: ${rule.titleRegex ?? '.*'}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                 ),
                               ),
                               Text(
-                                'Message regex: ${rule.messageRegex ?? '*'}',
+                                'Message regex: ${rule.messageRegex ?? '.*'}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                 ),
@@ -217,10 +211,6 @@ class _SettingsState extends State<Settings> {
                                 ),
                             ],
                             crossAxisAlignment: CrossAxisAlignment.start,
-                          ),
-                          const Spacer(),
-                          Column(
-                            children: [],
                           ),
                         ],
                       ),

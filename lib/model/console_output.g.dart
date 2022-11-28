@@ -27,6 +27,13 @@ class _$ConsoleOutputSerializer implements StructuredSerializer<ConsoleOutput> {
           specifiedType: const FullType(String)),
     ];
     Object? value;
+    value = object.notification;
+    if (value != null) {
+      result
+        ..add('notification')
+        ..add(serializers.serialize(value,
+            specifiedType: const FullType(DataModel.Notification)));
+    }
     value = object.icon;
     if (value != null) {
       result
@@ -57,6 +64,11 @@ class _$ConsoleOutputSerializer implements StructuredSerializer<ConsoleOutput> {
           result.message = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String;
           break;
+        case 'notification':
+          result.notification.replace(serializers.deserialize(value,
+                  specifiedType: const FullType(DataModel.Notification))!
+              as DataModel.Notification);
+          break;
         case 'icon':
           result.icon = serializers.deserialize(value,
               specifiedType: const FullType(Uint8List)) as Uint8List?;
@@ -74,12 +86,18 @@ class _$ConsoleOutput extends ConsoleOutput {
   @override
   final String message;
   @override
+  final DataModel.Notification? notification;
+  @override
   final Uint8List? icon;
 
   factory _$ConsoleOutput([void Function(ConsoleOutputBuilder)? updates]) =>
       (new ConsoleOutputBuilder()..update(updates)).build();
 
-  _$ConsoleOutput._({required this.timestamp, required this.message, this.icon})
+  _$ConsoleOutput._(
+      {required this.timestamp,
+      required this.message,
+      this.notification,
+      this.icon})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(
         timestamp, 'ConsoleOutput', 'timestamp');
@@ -99,13 +117,16 @@ class _$ConsoleOutput extends ConsoleOutput {
     return other is ConsoleOutput &&
         timestamp == other.timestamp &&
         message == other.message &&
+        notification == other.notification &&
         icon == other.icon;
   }
 
   @override
   int get hashCode {
-    return $jf(
-        $jc($jc($jc(0, timestamp.hashCode), message.hashCode), icon.hashCode));
+    return $jf($jc(
+        $jc($jc($jc(0, timestamp.hashCode), message.hashCode),
+            notification.hashCode),
+        icon.hashCode));
   }
 
   @override
@@ -113,6 +134,7 @@ class _$ConsoleOutput extends ConsoleOutput {
     return (newBuiltValueToStringHelper('ConsoleOutput')
           ..add('timestamp', timestamp)
           ..add('message', message)
+          ..add('notification', notification)
           ..add('icon', icon))
         .toString();
   }
@@ -130,6 +152,12 @@ class ConsoleOutputBuilder
   String? get message => _$this._message;
   set message(String? message) => _$this._message = message;
 
+  DataModel.NotificationBuilder? _notification;
+  DataModel.NotificationBuilder get notification =>
+      _$this._notification ??= new DataModel.NotificationBuilder();
+  set notification(DataModel.NotificationBuilder? notification) =>
+      _$this._notification = notification;
+
   Uint8List? _icon;
   Uint8List? get icon => _$this._icon;
   set icon(Uint8List? icon) => _$this._icon = icon;
@@ -141,6 +169,7 @@ class ConsoleOutputBuilder
     if ($v != null) {
       _timestamp = $v.timestamp;
       _message = $v.message;
+      _notification = $v.notification?.toBuilder();
       _icon = $v.icon;
       _$v = null;
     }
@@ -160,13 +189,27 @@ class ConsoleOutputBuilder
 
   @override
   _$ConsoleOutput build() {
-    final _$result = _$v ??
-        new _$ConsoleOutput._(
-            timestamp: BuiltValueNullFieldError.checkNotNull(
-                timestamp, 'ConsoleOutput', 'timestamp'),
-            message: BuiltValueNullFieldError.checkNotNull(
-                message, 'ConsoleOutput', 'message'),
-            icon: icon);
+    _$ConsoleOutput _$result;
+    try {
+      _$result = _$v ??
+          new _$ConsoleOutput._(
+              timestamp: BuiltValueNullFieldError.checkNotNull(
+                  timestamp, 'ConsoleOutput', 'timestamp'),
+              message: BuiltValueNullFieldError.checkNotNull(
+                  message, 'ConsoleOutput', 'message'),
+              notification: _notification?.build(),
+              icon: icon);
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'notification';
+        _notification?.build();
+      } catch (e) {
+        throw new BuiltValueNestedFieldError(
+            'ConsoleOutput', _$failedField, e.toString());
+      }
+      rethrow;
+    }
     replace(_$result);
     return _$result;
   }

@@ -14,12 +14,14 @@ import 'package:collection/collection.dart';
 import 'notification_mqtt_rule.dart';
 import 'notification.dart' as DataModel;
 import 'console_output.dart';
+import 'mqtt_client_payload_builder_string.dart';
 
 enum SharedPreferenceKey { rulesURL, mqttServerURL, mqttUsername, mqttPassword }
 
 class DataManager with ChangeNotifier {
   List<NotificationMQTTRule> rules = [];
   List<ConsoleOutput> consoleOutput = [];
+  Set<String> consoleOutputPackageNameFilter = {};
 
   String? _rulesURL;
   String? _mqttServerURL;
@@ -126,6 +128,16 @@ class DataManager with ChangeNotifier {
     }
   }
 
+  List<ConsoleOutput> get filteredConsoleOutput {
+    if (consoleOutputPackageNameFilter.isEmpty) {
+      return consoleOutput;
+    }
+    return consoleOutput
+        .where((consoleOutput) =>
+            consoleOutputPackageNameFilter.any((filter) => filter == consoleOutput.notification?.packageName))
+        .toList();
+  }
+
   // Reload rules
 
   Future<List<NotificationMQTTRule>> reloadRules() async {
@@ -154,7 +166,7 @@ class DataManager with ChangeNotifier {
     final builder = MqttClientPayloadBuilder();
     builder.addString('${rules.length}');
     _mqttServerClient?.publishMessage('notification-mqtt-rules-loaded', MqttQos.exactlyOnce, builder.payload!);
-    logConsoleOutput(null, '${builder.payload!} rules reloaded');
+    logConsoleOutput(null, '${rules.length} rules reloaded');
   }
 
   // MQTT
@@ -220,16 +232,16 @@ class DataManager with ChangeNotifier {
       }
     }
 
-    final matchText = '${notification.text} ${notification.message}';
     List<String> dataParameters = [];
 
     if (rule.titleRegex != null) {
       final regex = RegExp(rule.titleRegex!);
-      final match = regex.firstMatch(matchText);
-      if (match != null) {
+      final match = regex.firstMatch(notification.text);
+      if (match != null && match.groupCount > 0) {
         for (var i = 0; i < match.groupCount; i++) {
-          final groupValue = match.group(i);
+          final groupValue = match.group(i + 1);
           if (groupValue != null) {
+            print('title match \'${rule.titleRegex}\' group $i value: $groupValue');
             // replace ordered value, i.e. $0 with group 0 value
             dataParameters.add(groupValue);
           }
@@ -239,11 +251,12 @@ class DataManager with ChangeNotifier {
 
     if (rule.messageRegex != null) {
       final regex = RegExp(rule.messageRegex!);
-      final match = regex.firstMatch(matchText);
-      if (match != null) {
+      final match = regex.firstMatch(notification.message);
+      if (match != null && match.groupCount > 0) {
         for (var i = 0; i < match.groupCount; i++) {
-          final groupValue = match.group(i);
+          final groupValue = match.group(i + 1);
           if (groupValue != null) {
+            print('message match \'${rule.messageRegex}\' group $i value: $groupValue');
             // replace ordered value, i.e. $0 with group 0 value
             dataParameters.add(groupValue);
           }
@@ -260,6 +273,7 @@ class DataManager with ChangeNotifier {
         final value = dataParameters[i];
         template.replaceFirst(variableName, value);
       }
+      print('data template: ${rule.dataTemplate}, result: $template');
       builder.addString(template);
     } else {
       for (var i = 0; i < dataParameters.length; i++) {
@@ -268,8 +282,8 @@ class DataManager with ChangeNotifier {
     }
 
     if (builder.payload != null) {
-      print('[MQTT] publish to ${rule.publishTopic}: ${builder.payload}');
-      logConsoleOutput(notification.packageName, 'MQTT ${rule.publishTopic}: ${builder.payload}');
+      print('[MQTT] publish to ${rule.publishTopic}: ${builder.payloadString()}');
+      logConsoleOutput(notification, 'MQTT ${rule.publishTopic}: ${builder.payloadString()}');
       _mqttServerClient?.publishMessage(rule.publishTopic, MqttQos.exactlyOnce, builder.payload!);
     }
   }
@@ -291,8 +305,10 @@ class DataManager with ChangeNotifier {
   }
 
   void _onRemoteNotificationReceived(NotifierListenerEvent event) {
-    logConsoleOutput(event.packageName,
-        'Notification received for ${event.packageName}:\nText: ${event.packageText}\nMessage: ${event.packageMessage}');
+    // suppress android system notifications
+    if (event.packageName == "com.android.systemui") {
+      return;
+    }
 
     final notification = DataModel.Notification((b) => b
       ..packageName = event.packageName
@@ -300,10 +316,13 @@ class DataManager with ChangeNotifier {
       ..text = event.packageText
       ..timestamp = event.timeStamp);
 
-    _processRemoteNotification(notification);
+    logConsoleOutput(notification,
+        'Notification received for ${event.packageName}:\nText: ${event.packageText}\nMessage: ${event.packageMessage}');
+
+    processRemoteNotification(notification);
   }
 
-  void _processRemoteNotification(DataModel.Notification notification) {
+  void processRemoteNotification(DataModel.Notification notification) {
     // check for reload notification
     if (notification.packageName == 'io.homeassistant.companion.android' &&
         notification.text == 'Notification MQTT' &&
@@ -316,14 +335,15 @@ class DataManager with ChangeNotifier {
     for (var notificationRule in rules) {
       if (notificationRule.packageName != notification.packageName) {
         // only match if packageNames match
-        return;
+        continue;
       }
       bool hasRegexMatch = false;
       if (notificationRule.titleRegex != null) {
         final regex = RegExp(notificationRule.titleRegex!);
         final hasMatch = regex.hasMatch(notification.text);
         if (hasMatch) {
-          logConsoleOutput(notification.packageName, 'regex match in title: ${notificationRule.titleRegex}');
+          logConsoleOutput(
+              notification, 'regex match in title: ${notification.text}\nregex: ${notificationRule.titleRegex}');
           hasRegexMatch = true;
         }
       }
@@ -331,7 +351,8 @@ class DataManager with ChangeNotifier {
         final regex = RegExp(notificationRule.messageRegex!);
         final hasMatch = regex.hasMatch(notification.message);
         if (hasMatch) {
-          logConsoleOutput(notification.packageName, 'regex match in message: ${notificationRule.messageRegex}');
+          logConsoleOutput(
+              notification, 'regex match in message: ${notification.message}\nregex: ${notificationRule.messageRegex}');
           hasRegexMatch = true;
         }
       }
@@ -353,11 +374,12 @@ class DataManager with ChangeNotifier {
 
   // Console output
 
-  void logConsoleOutput(String? packageName, String message) {
-    final app = _apps.firstWhereOrNull((app) => app.packageName == packageName);
+  void logConsoleOutput(DataModel.Notification? notification, String message) {
+    final app = _apps.firstWhereOrNull((app) => app.packageName == notification?.packageName);
     final output = ConsoleOutput((b) => b
       ..timestamp = DateTime.now()
       ..message = message
+      ..notification = notification?.toBuilder()
       ..icon = app?.icon);
     consoleOutput.insert(0, output);
     notifyListeners();
@@ -366,5 +388,21 @@ class DataManager with ChangeNotifier {
   void clearConsoleLogs() {
     consoleOutput.clear();
     notifyListeners();
+  }
+
+  void toggleConsoleOutputForApp(String packageName) {
+    if (consoleOutputPackageNameFilter.any((filter) => filter == packageName)) {
+      consoleOutputPackageNameFilter.remove(packageName);
+    } else {
+      consoleOutputPackageNameFilter.add(packageName);
+    }
+    notifyListeners();
+  }
+
+  List<ApplicationWithIcon> receivedNotificationApplications() {
+    return _apps
+        .where(
+            (app) => consoleOutput.any((consoleOutput) => consoleOutput.notification?.packageName == app.packageName))
+        .toList();
   }
 }
