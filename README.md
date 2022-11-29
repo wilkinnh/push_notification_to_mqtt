@@ -81,6 +81,8 @@ data:
 
 Obviously update the service to point to the desired device, but it will look for that specific title and message and then kick off reloading the rules.
 
+Additionally, after each reload the app will send an MQTT message to the topic `notification-mqtt-rules-loaded` which you can verify that everything was reloaded.
+
 ## Use Case - World Cup
 
 I wanted to create an automation that would trigger a few things in my house when a goal was scored in the World Cup. Those things include:
