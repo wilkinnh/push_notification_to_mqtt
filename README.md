@@ -51,10 +51,10 @@ The payload of the MQTT message is a JSON object that contains the original push
 
 ```
 {
-    "title":"26' Giorgian De Arrascaeta scores!",
-    "message":"Ghana 0 - [1] Uruguay",
-    "titleMatch":"Giorgian De Arrascaeta",
-    "messageMatch":"Uruguay"
+    "title": "26' Giorgian De Arrascaeta scores!",
+    "message": "Ghana 0 - [1] Uruguay",
+    "titleMatch": "Giorgian De Arrascaeta",
+    "messageMatch": "Uruguay"
 }
 ```
 
