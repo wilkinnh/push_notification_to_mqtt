@@ -320,14 +320,17 @@ class DataManager with ChangeNotifier {
         // only match if packageNames match
         continue;
       }
-      bool hasRegexMatch = false;
+      bool? hasTitleRegexMatch;
+      bool? hasMessageRegexMatch;
       if (notificationRule.titleRegex != null) {
         final regex = RegExp(notificationRule.titleRegex!);
         final hasMatch = regex.hasMatch(notification.text);
         if (hasMatch) {
           logConsoleOutput(
               notification, 'regex match in title: ${notification.text}\nregex: ${notificationRule.titleRegex}');
-          hasRegexMatch = true;
+          hasTitleRegexMatch = true;
+        } else {
+          hasTitleRegexMatch = false;
         }
       }
       if (notificationRule.messageRegex != null) {
@@ -336,13 +339,23 @@ class DataManager with ChangeNotifier {
         if (hasMatch) {
           logConsoleOutput(
               notification, 'regex match in message: ${notification.message}\nregex: ${notificationRule.messageRegex}');
-          hasRegexMatch = true;
+          hasMessageRegexMatch = true;
+        } else {
+          hasMessageRegexMatch = false;
         }
       }
-      // check if first match equals the regexMatch
+
+      // check if there's a valid regex match
+      bool hasRegexMatch;
+      if (hasTitleRegexMatch != null && hasMessageRegexMatch != null) {
+        // if both title and message regex is provided, both must match
+        hasRegexMatch = hasTitleRegexMatch == true && hasMessageRegexMatch == true;
+      } else {
+        hasRegexMatch = hasTitleRegexMatch == true || hasMessageRegexMatch == true;
+      }
+
       if (hasRegexMatch) {
         matches.add(notificationRule);
-
         // publish MQTT message
         _publishMQTTMessage(notification, notificationRule);
       }
