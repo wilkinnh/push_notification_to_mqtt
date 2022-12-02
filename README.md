@@ -45,7 +45,7 @@ Rules contain the information needed to determine a match and where to publish t
 | `messageRegex` | Regex pattern to match on the push notification message. If you want to capture a value within the message, add a capture group with `()`.                                     |
 | `publishTopic` | Topic to publish to your broker. If you captured a value from the title or message, the MQTT message will return a JSON payload with any matches.                              |
 
-## MQTT Message
+## MQTT Payload
 
 The payload of the MQTT message is a JSON object that contains the original push notification data, as well as any matches from the title and/or message.
 
