@@ -13,7 +13,7 @@ Supported platforms:
 
 ### Bus alert
 
-Let's say you have an app that lets you know when the bus is nearby. Even if the bus app doesn't intergrate with your smart home, you can now pick up on those push notifications and trigger your home to flash the lights or announce on a speaker that the bus is almost here.
+Let's say you have an app that lets you know when the bus is nearby. Even if the bus app doesn't integrate with your smart home, you can now pick up on those push notifications and trigger your home to flash the lights or announce on a speaker that the bus is almost here.
 
 ### Package delivery
 
@@ -27,7 +27,7 @@ Want your home to celebrate with you when your team scores? You can pick up on t
 
 ## Rules
 
-Rules contain the information needed to detemine a match and where to publish the MQTT message.
+Rules contain the information needed to determine a match and where to publish the MQTT message.
 
 ```
 {
@@ -39,11 +39,24 @@ Rules contain the information needed to detemine a match and where to publish th
 ```
 
 | Property       | Comment                                                                                                                                                                        |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| -------------- |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `packageName`  | The 3rd party app's package name. If you don't know the package name, you can determine this by waiting for a push notification to be received and viewing the console output. |
 | `titleRegex`   | Regex pattern to match on the push notification title. If you want to capture a value within the title, add a capture group with `()`.                                         |
-| `messageRegex` | Regex pattern to match on the push notification message. If you want to capture a value within the title, add a capture group with `()`.                                       |
-| `publishTopic` | Topic to publish to your broker. If you captured a value from the title or message, the MQTT message will return the captured value.                                           |
+| `messageRegex` | Regex pattern to match on the push notification message. If you want to capture a value within the message, add a capture group with `()`.                                     |
+| `publishTopic` | Topic to publish to your broker. If you captured a value from the title or message, the MQTT message will return a JSON payload with any matches.                              |
+
+## MQTT Message
+
+The payload of the MQTT message is a JSON object that contains the original push notification data, as well as any matches from the title and/or message.
+
+```
+{
+    "title":"26' Giorgian De Arrascaeta scores!",
+    "message":"Ghana 0 - [1] Uruguay",
+    "titleMatch":"Giorgian De Arrascaeta",
+    "messageMatch":"Uruguay"
+}
+```
 
 ## Configuration
 
@@ -143,66 +156,94 @@ trigger:
       team_colors: |-
         {{
           {
-          "Netherlands": [243, 108, 33],
-          "Ecuador": [255, 209, 0],
-          "Senegal": [0, 133, 63],
-          "Qatar": [127, 20, 49],
+          "Netherlands": [243, 108, 33], 
+          "Ecuador": [255, 209, 0], 
+          "Senegal": [0, 133, 63], 
+          "Qatar": [127, 20, 49], 
           "England": [0, 0, 64],
-          "Iran": [35, 159, 64],
-          "USA": [10, 49, 97],
-          "Wales": [200, 16, 46],
-          "Poland": [220, 20, 60],
-          "Argentina": [67, 161, 213],
-          "Saudi Arabia": [22, 93, 49],
+          "Iran": [35, 159, 64], 
+          "USA": [10, 49, 97], 
+          "Wales": [200, 16, 46], 
+          "Poland": [220, 20, 60], 
+          "Argentina": [67, 161, 213], 
+          "Saudi Arabia": [22, 93, 49], 
           "Mexico": [0, 99, 65],
-          "France": [33, 48, 77],
-          "Australia": [1, 33, 105],
-          "Denmark": [205, 24, 30],
-          "Tunisia": [200, 16, 46],
-          "Spain": [139, 13, 17],
-          "Japan": [188, 0, 45],
+          "France": [33, 48, 77], 
+          "Australia": [1, 33, 105], 
+          "Denmark": [205, 24, 30], 
+          "Tunisia": [200, 16, 46], 
+          "Spain": [139, 13, 17], 
+          "Japan": [188, 0, 45], 
           "Costa Rica": [0, 32, 91],
-          "Germany": [176, 165, 95],
-          "Croatia": [237, 28, 36],
-          "Morocco": [193, 39, 45],
-          "Belgium": [227, 6, 19],
-          "Canada": [216, 6, 33],
-          "Brazil": [25, 174, 71],
+          "Germany": [176, 165, 95], 
+          "Croatia": [237, 28, 36], 
+          "Morocco": [193, 39, 45], 
+          "Belgium": [227, 6, 19], 
+          "Canada": [216, 6, 33], 
+          "Brazil": [25, 174, 71], 
           "Switzerland": [255, 0, 0],
-          "Cameroon": [0, 122, 94],
-          "Serbia": [183, 46, 62],
-          "Portugal": [4, 106, 56],
-          "South Korea": [205, 46, 58],
-          "Uruguay": [0, 20, 137],
+          "Cameroon": [0, 122, 94], 
+          "Serbia": [183, 46, 62], 
+          "Portugal": [4, 106, 56], 
+          "South Korea": [205, 46, 58], 
+          "Uruguay": [0, 20, 137], 
           "Ghana": [239, 51, 64]
           }
         }}
 condition:
   - condition: template
     value_template: "{{ team in teams }}"
+    alias: Validate team name
 action:
   - service: notify.personal_phone
     data:
       title: World Cup Goal
       message: "{{ team }} scored!"
+  - service: scene.create
+    data:
+      scene_id: world_cup_goal_lights_before
+      snapshot_entities:
+        - light.office_lights
+        - light.theater_accent_lights
+    enabled: true
+    alias: Capture current light state
   - service: light.turn_on
     data:
       rgb_color: "{{ team_colors[team] }}"
       transition: 0.1
+      brightness: 255
     target:
       entity_id:
         - light.office_lights
-        - light.theater_lights
+        - light.theater_accent_lights
     alias: Set team color
   - service: script.wacky_wavy_inflatable_tubeman_alert
     data: {}
+    enabled: true
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
   - service: light.turn_on
     data:
       flash: long
     target:
       entity_id:
         - light.office_lights
-        - light.theater_lights
+        - light.theater_accent_lights
     alias: Flash lights
+    enabled: true
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 15
+      milliseconds: 0
+  - service: scene.turn_on
+    target:
+      entity_id: scene.world_cup_goal_lights_before
+    metadata: {}
+    enabled: true
+    alias: Reset lights back to original state
 mode: single
 ```
