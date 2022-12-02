@@ -103,23 +103,25 @@ I basically need 2 rules to cover both of these cases, and that looks like this:
 ```
 {
     "packageName": "com.mobilefootie.wc2010",
+    "titleRegex": "\\d+' (.*) scores!",
     "messageRegex": "(.*) \\[\\d+\\] - .*",
     "publishTopic": "soccer/worldcup/goal"
 },
 {
     "packageName": "com.mobilefootie.wc2010",
+    "titleRegex": "\\d+' (.*) scores!",
     "messageRegex": ".* - \\[\\d+\\] (.*)",
     "publishTopic": "soccer/worldcup/goal"
 }
 ```
 
-This should send out a message on the topic `soccer/worldcup/goal` with the value of the team that scored.
+This should send out a message on the topic `soccer/worldcup/goal` with a json payload that contains the original title and message, as well as any matched values. In this case we're using the `messageMatch` to pull the team name.
 
 ### Automation
 
 There's basically 3 things that need to happen for this to run successfully.
 
-1. team name needs to come from `trigger.payload`
+1. team name comes from `trigger.payload_json.messageMatch`
 2. team needs to match one of the teams listed in the `teams` variable. This basically verifies this goal has to do with the World Cup.
 3. team color needs to be defined in the `team_colors` variable. Need RGB values for the lights.
 
@@ -130,7 +132,7 @@ trigger:
   - platform: mqtt
     topic: soccer/worldcup/goal
     variables:
-      team: "{{ trigger.payload }}"
+      team: "{{ trigger.payload_json.messageMatch }}"
       teams: >-
         ('Netherlands', 'Ecuador', 'Senegal', 'Qatar', 'England', 'Iran', 'USA',
         'Wales', 'Poland', 'Argentina', 'Saudi Arabia', 'Mexico', 'France',

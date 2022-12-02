@@ -232,6 +232,7 @@ class DataManager with ChangeNotifier {
       }
     }
 
+    Map<String, String> payload = {"title": notification.text, "message": notification.message};
     List<String> dataParameters = [];
 
     if (rule.titleRegex != null) {
@@ -242,8 +243,7 @@ class DataManager with ChangeNotifier {
           final groupValue = match.group(i + 1);
           if (groupValue != null) {
             print('title match \'${rule.titleRegex}\' group $i value: $groupValue');
-            // replace ordered value, i.e. $0 with group 0 value
-            dataParameters.add(groupValue);
+            payload["titleMatch"] = groupValue;
           }
         }
       }
@@ -257,35 +257,18 @@ class DataManager with ChangeNotifier {
           final groupValue = match.group(i + 1);
           if (groupValue != null) {
             print('message match \'${rule.messageRegex}\' group $i value: $groupValue');
-            // replace ordered value, i.e. $0 with group 0 value
-            dataParameters.add(groupValue);
+            payload["messageMatch"] = groupValue;
           }
         }
       }
     }
 
     final builder = MqttClientPayloadBuilder();
+    builder.addString(json.encode(payload));
 
-    if (rule.dataTemplate != null) {
-      var template = rule.dataTemplate!;
-      for (var i = 0; i < dataParameters.length; i++) {
-        final variableName = '\$$i';
-        final value = dataParameters[i];
-        template.replaceFirst(variableName, value);
-      }
-      print('data template: ${rule.dataTemplate}, result: $template');
-      builder.addString(template);
-    } else {
-      for (var i = 0; i < dataParameters.length; i++) {
-        builder.addString(dataParameters[i]);
-      }
-    }
-
-    if (builder.payload != null) {
-      print('[MQTT] publish to ${rule.publishTopic}: ${builder.payloadString()}');
-      logConsoleOutput(notification, 'MQTT ${rule.publishTopic}: ${builder.payloadString()}');
-      _mqttServerClient?.publishMessage(rule.publishTopic, MqttQos.exactlyOnce, builder.payload!);
-    }
+    print('[MQTT] publish to ${rule.publishTopic}: ${payload.toString()}');
+    logConsoleOutput(notification, 'MQTT ${rule.publishTopic}: ${payload.toString()}');
+    _mqttServerClient?.publishMessage(rule.publishTopic, MqttQos.exactlyOnce, builder.payload!);
   }
 
   // Remote notifications
