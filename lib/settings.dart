@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'model/data_manager.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
@@ -16,6 +17,8 @@ class _SettingsState extends State<Settings> {
   final _mqttPasswordController = TextEditingController();
   final _rulesURLEditingController = TextEditingController();
 
+  String? versionNumber = null;
+
   void _initializeControllers(DataManager dataManager) {
     if (_mqttServerEditingController.text.isEmpty && dataManager.mqttServerURL != null) {
       _mqttServerEditingController.text = dataManager.mqttServerURL!;
@@ -29,6 +32,11 @@ class _SettingsState extends State<Settings> {
     if (_rulesURLEditingController.text.isEmpty && dataManager.rulesURL != null) {
       _rulesURLEditingController.text = dataManager.rulesURL!;
     }
+    PackageInfo.fromPlatform().then((PackageInfo packageInfo) {
+      setState(() {
+        versionNumber = "Version ${packageInfo.version}";
+      });
+    });
   }
 
   void dispose() {
@@ -218,6 +226,13 @@ class _SettingsState extends State<Settings> {
                   ],
                 );
               }),
+              if (versionNumber != null)
+                TableRow(children: [
+                  Text(
+                    versionNumber!,
+                    textAlign: TextAlign.center,
+                  ),
+                ])
             ],
           ),
         ),
