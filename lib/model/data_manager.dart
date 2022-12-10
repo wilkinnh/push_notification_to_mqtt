@@ -142,6 +142,7 @@ class DataManager with ChangeNotifier {
 
   Future<List<NotificationMQTTRule>> reloadRules() async {
     if (rulesURL == null) {
+      logConsoleOutput(null, "reload rules failed: no rules URL detected");
       return [];
     }
     final response = await _client.get(Uri.parse(rulesURL!));
@@ -157,6 +158,8 @@ class DataManager with ChangeNotifier {
       rules = loadedRules;
       _notifyReload();
       notifyListeners();
+    } else {
+      logConsoleOutput(null, "reload rules failed: loaded rules are empty");
     }
     return rules;
   }
